@@ -1192,12 +1192,50 @@ if strumento == "Analisi resi":
             # Avviso libri scaduti ma ancora in buona rotazione — non vanno svuotati
             df_scaduto_vendono = df_scaduto[df_scaduto["Vendute_Ultimi_30_Giorni"] >= rot_min_ui]
             if not df_scaduto_vendono.empty:
-                titoli_vendono = ", ".join(f"«{t}»" for t in df_scaduto_vendono["Titolo"].tolist())
-                st.info(
-                    f"⚠️ **{len(df_scaduto_vendono)} titolo/i scaduti vendono ancora bene "
-                    f"(≥ {rot_min_ui} copie/mese):** {titoli_vendono}. "
-                    "Fuori dalla finestra di resa, ma conviene tenerli in vetrina."
-                )
+                titoli_list = df_scaduto_vendono["Titolo"].tolist()
+                n_titoli = len(titoli_list)
+
+                # Mostra solo i primi 10 titoli in anteprima
+                preview_limit = 10
+                titoli_preview = titoli_list[:preview_limit]
+                titoli_preview_str = ", ".join(f"«{t}»" for t in titoli_preview)
+
+                if n_titoli <= preview_limit:
+                    st.info(
+                        f"⚠️ **{n_titoli} titolo/i scaduti vendono ancora bene "
+                        f"(≥ {rot_min_ui} copie/mese):** {titoli_preview_str}. "
+                        "Fuori dalla finestra di resa, ma conviene tenerli in vetrina."
+                    )
+                else:
+                    st.info(
+                        f"⚠️ **{n_titoli} titolo/i scaduti vendono ancora bene "
+                        f"(≥ {rot_min_ui} copie/mese)** — Mostrando i primi {preview_limit} di {n_titoli}:"
+                    )
+                    st.markdown(f"**Titoli:** {titoli_preview_str}")
+
+                    with st.expander(f"📖 Visualizza tutti i {n_titoli} titoli"):
+                        # Pagina i titoli in gruppi di 50
+                        per_page = 50
+                        n_pages = (n_titoli + per_page - 1) // per_page
+
+                        if n_pages <= 3:
+                            # Se pochi titoli, mostrali tutti subito
+                            all_titoli_str = ", ".join(f"«{t}»" for t in titoli_list)
+                            st.markdown(all_titoli_str)
+                        else:
+                            # Se molti, offri selezione pagina
+                            page = st.selectbox(
+                                "Pagina",
+                                options=range(1, n_pages + 1),
+                                key="scaduti_vendono_page"
+                            )
+                            start_idx = (page - 1) * per_page
+                            end_idx = min(start_idx + per_page, n_titoli)
+                            page_titoli = titoli_list[start_idx:end_idx]
+                            page_titoli_str = ", ".join(f"«{t}»" for t in page_titoli)
+                            st.markdown(page_titoli_str)
+
+                    st.caption("💡 Questi titoli sono fuori dalla finestra di resa, ma vendono ancora bene: conviene tenerli in vetrina.")
 
             _wc1, _wc2 = st.columns([2, 1])
             with _wc1:
