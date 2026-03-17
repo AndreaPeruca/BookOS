@@ -973,7 +973,7 @@ with st.sidebar:
             pass  # Spazio vuoto per simmetria
     elif strumento == "Analisi storica":
         st.divider()
-        st.caption("Carica 2+ snapshot CSV · stesso formato del gestionale · ordine cronologico")
+        st.markdown("📊 **Carica 2+ snapshot CSV** · stesso formato del gestionale · ordine cronologico")
         storico_files_sb = st.file_uploader(
             "Snapshot storici", type="csv",
             accept_multiple_files=True, key="storico_up",
@@ -982,7 +982,7 @@ with st.sidebar:
         mag_file_sb = None
     elif strumento == "Simulatore ordine":
         st.divider()
-        st.caption("Usa il gestionale già caricato come base · caricalo nel Radar Salva-Cassa")
+        st.markdown("📈 **Usa il gestionale già caricato come base** · caricalo nel Radar Salva-Cassa")
         mag_file_sb = None
     else:
         mag_file_sb = None
@@ -991,7 +991,7 @@ with st.sidebar:
     st.divider()
 
     if n_usato > 0:
-        st.caption(f"💾 Inventario: {n_usato} libri · {INVENTORY_FILE.name}")
+        st.markdown(f"💾 **Inventario:** {n_usato} libri · `{INVENTORY_FILE.name}`")
         st.divider()
 
     st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
@@ -1010,7 +1010,7 @@ if strumento == "Analisi resi":
     df_mag = st.session_state.get("df_mag")
 
     with st.expander("⚙️ Parametri analisi", expanded=False):
-        st.caption("Adatta le soglie alle condizioni del tuo distributore.")
+        st.markdown("📋 Adatta le soglie alle condizioni del tuo distributore.")
         _c1, _c2, _c3 = st.columns(3)
         _giorni_invenduto = _c1.number_input(
             "Invenduto dopo (giorni)", min_value=30, max_value=730, value=182, step=30,
