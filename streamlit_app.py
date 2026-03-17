@@ -255,10 +255,11 @@ if "inventario_usato" not in st.session_state:
 
 defaults = {
     "svuota_confirm":   False,
-    "pagina":           "Analisi resi",
+    "pagina":           "Dashboard",
     "df_mag":           None,
     "df_mag_name":      None,
     "storico_up":       [],
+    "dark_mode":        False,  # Dark mode toggle
     # Calcolatore — valori persistono tra navigazioni
     "calc_titolo":      "",
     "calc_prezzo":      18.00,
@@ -366,6 +367,30 @@ _TONE = {
     "neutral":  {"bar": "#C8BFB0", "val": "#16130F"},
 }
 
+def get_theme_colors():
+    """Return theme-aware colors based on dark_mode session state."""
+    dark_mode = st.session_state.get("dark_mode", False)
+    if dark_mode:
+        return {
+            "text": "#F5F1EC",
+            "text_secondary": "#D4CCC4",
+            "text_muted": "#9B9590",
+            "bg": "#1A1918",
+            "bg_card": "#2D2B28",
+            "border": "#3A3835",
+            "accent": "#E74C3C",
+        }
+    else:
+        return {
+            "text": "#16130F",
+            "text_secondary": "#5C5852",
+            "text_muted": "#9B9590",
+            "bg": "#F5F1EC",
+            "bg_card": "#FFFFFF",
+            "border": "#E7E3DC",
+            "accent": "#B5362C",
+        }
+
 def metric_card(label, value, tone="neutral", note=""):
     t = _TONE.get(tone, _TONE["neutral"])
     note_html = f'\n        <div class="mc-note">{note}</div>' if note else ""
@@ -472,6 +497,8 @@ st.markdown("""
 :root {
     --font-serif: 'EB Garamond', 'Georgia', serif;
     --font-sans:  'Inter', 'Helvetica Neue', sans-serif;
+
+    /* Light Mode (Default) */
     --bg:         #F5F1EC;
     --bg-card:    #FFFFFF;
     --bg-sidebar: #111110;
@@ -487,6 +514,22 @@ st.markdown("""
     --radius:     10px;
     --radius-sm:  7px;
     --t:          .16s ease;
+}
+
+/* Dark Mode */
+[data-theme="dark"] {
+    --bg:         #1A1918;
+    --bg-card:    #2D2B28;
+    --bg-sidebar: #121110;
+    --border:     #3A3835;
+    --text:       #F5F1EC;
+    --text-2:     #D4CCC4;
+    --text-muted: #9B9590;
+    --accent:     #E74C3C;
+    --accent-2:   #FF6B5B;
+    --accent-bg:  rgba(231,76,60,.15);
+    --shadow-sm:  0 1px 3px rgba(0,0,0,.4);
+    --shadow-md:  0 4px 16px rgba(0,0,0,.5), 0 1px 4px rgba(0,0,0,.3);
 }
 
 /* ── BASE ───────────────────────────────────────────────── */
@@ -510,7 +553,13 @@ section[data-testid="stSidebar"] > div {
     background-color: var(--bg-sidebar) !important;
     border-right: 1px solid #1E1E1C !important;
     padding-top: 1.25rem !important;
+    transition: background-color var(--t), border-color var(--t) !important;
 }
+
+[data-theme="dark"] section[data-testid="stSidebar"] > div {
+    border-right-color: #3A3835 !important;
+}
+
 /* Nasconde il pulsante collapse/expand — sidebar sempre visibile */
 button[data-testid="collapsedControl"],
 [data-testid="collapsedControl"] {
@@ -529,6 +578,18 @@ section[data-testid="stSidebar"] .stMarkdown,
 section[data-testid="stSidebar"] .stMarkdown p {
     font-family: var(--font-sans) !important;
     color: #8A8784 !important;
+    transition: color var(--t) !important;
+}
+
+[data-theme="dark"] section[data-testid="stSidebar"],
+[data-theme="dark"] section[data-testid="stSidebar"] p,
+[data-theme="dark"] section[data-testid="stSidebar"] span,
+[data-theme="dark"] section[data-testid="stSidebar"] div,
+[data-theme="dark"] section[data-testid="stSidebar"] label,
+[data-theme="dark"] section[data-testid="stSidebar"] small,
+[data-theme="dark"] section[data-testid="stSidebar"] .stMarkdown,
+[data-theme="dark"] section[data-testid="stSidebar"] .stMarkdown p {
+    color: #9B9590 !important;
 }
 
 .sb-brand {
@@ -580,16 +641,34 @@ section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p {
 section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
     border-color: #2A2A27 !important;
     background: #191917 !important;
+    transition: border-color var(--t), background-color var(--t) !important;
+}
+
+[data-theme="dark"] section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
+    border-color: #3A3835 !important;
+    background: #252420 !important;
 }
 .sb-version {
     font-size: .67rem; color: #5A5856 !important;
     padding: .4rem .1rem .1rem .1rem;
     font-family: var(--font-sans);
+    transition: color var(--t) !important;
 }
+
+[data-theme="dark"] .sb-version {
+    color: #6A6764 !important;
+}
+
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
     background: rgba(181,54,44,.14) !important;
     color: #D4CCC4 !important;
     border-radius: 6px;
+    transition: background-color var(--t), color var(--t) !important;
+}
+
+[data-theme="dark"] section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
+    background: rgba(231,76,60,.2) !important;
+    color: #FF9B85 !important;
 }
 .market-label {
     font-size: .75rem; color: var(--text-muted);
@@ -816,12 +895,40 @@ button[data-testid="collapsedControl"],
 }
 .main > div:first-child { animation: fadeUp .28s ease both; }
 
+/* ── DARK MODE OVERRIDES ────────────────────────────────── */
+[data-theme="dark"] {
+    color-scheme: dark;
+}
+
+[data-theme="dark"] [data-testid="stAlert"] {
+    background-color: rgba(100, 100, 100, 0.15) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] [data-testid="stDataFrame"] {
+    background-color: var(--bg-card) !important;
+}
+
+[data-theme="dark"] [data-testid="stDataFrame"] tbody {
+    background-color: var(--bg) !important;
+}
+
 /* ── SCROLLBAR ──────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; transition: background var(--t); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 </style>
+""", unsafe_allow_html=True)
+
+# Apply dark mode theme based on session_state
+dark_mode_enabled = st.session_state.get("dark_mode", False)
+theme_attr = 'data-theme="dark"' if dark_mode_enabled else ''
+st.markdown(f"""
+<script>
+document.documentElement.setAttribute("data-theme", {'"dark"' if dark_mode_enabled else '"light"'});
+</script>
 """, unsafe_allow_html=True)
 
 # ---------------------------------------------------------------------------
@@ -830,41 +937,62 @@ button[data-testid="collapsedControl"],
 def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src="", show_png=True):
     """Applica lo stile Economist a un oggetto Plotly Figure con animazioni e interattività premium."""
     try:
+        # Dark mode support
+        dark_mode = st.session_state.get("dark_mode", False)
+        if dark_mode:
+            # Dark mode colors
+            bg_color = "#2D2B28"
+            text_color = "#F5F1EC"
+            text_secondary = "#D4CCC4"
+            grid_color = "#3A3835"
+            border_color = "#4A4844"
+            hover_bg = "#3A3835"
+            hover_text = "#F5F1EC"
+        else:
+            # Light mode colors
+            bg_color = "white"
+            text_color = "#16130F"
+            text_secondary = "#5C5852"
+            grid_color = "#F0EBE5"
+            border_color = "#D5D0CB"
+            hover_bg = "#16130F"
+            hover_text = "#F5F1EC"
+
         title_html = (f"<b>{title}</b>" if title else "") + (
-            f"<br><span style='font-size:12px;color:#5C5852;font-weight:400;letter-spacing:0.3px'>{subtitle}</span>"
+            f"<br><span style='font-size:12px;color:{text_secondary};font-weight:400;letter-spacing:0.3px'>{subtitle}</span>"
             if subtitle else ""
         )
         fig.update_layout(
-            paper_bgcolor="white", plot_bgcolor="white",
-            font=dict(family="Inter,'Helvetica Neue',sans-serif", color="#16130F", size=12),
+            paper_bgcolor=bg_color, plot_bgcolor=bg_color,
+            font=dict(family="Inter,'Helvetica Neue',sans-serif", color=text_color, size=12),
             title=dict(
                 text=title_html, x=0, xanchor="left",
-                font=dict(size=16, color="#16130F", family="Inter,'Helvetica Neue',sans-serif", weight="bold"),
+                font=dict(size=16, color=text_color, family="Inter,'Helvetica Neue',sans-serif", weight="bold"),
                 pad=dict(b=12, l=0, t=4),
             ),
             margin=dict(l=12, r=52, t=88 if title else 28, b=80 if src else 56),
             legend=dict(
                 orientation="h", yanchor="bottom", y=1.03, xanchor="left", x=0,
-                font=dict(size=11, color="#5C5852", family="Inter"),
+                font=dict(size=11, color=text_secondary, family="Inter"),
                 bgcolor="rgba(0,0,0,0)", borderwidth=0, itemsizing="constant",
                 tracegroupgap=20,
             ),
             xaxis=dict(
-                showgrid=False, showline=True, linecolor="#D5D0CB", linewidth=1.2,
-                tickfont=dict(size=11, color="#5C5852", family="Inter"),
-                ticks="outside", ticklen=4, tickcolor="#D5D0CB", title=None,
+                showgrid=False, showline=True, linecolor=border_color, linewidth=1.2,
+                tickfont=dict(size=11, color=text_secondary, family="Inter"),
+                ticks="outside", ticklen=4, tickcolor=border_color, title=None,
                 mirror=False,
             ),
             yaxis=dict(
-                showgrid=True, gridcolor="#F0EBE5", gridwidth=0.8,
-                showline=False, tickfont=dict(size=11, color="#5C5852", family="Inter"),
+                showgrid=True, gridcolor=grid_color, gridwidth=0.8,
+                showline=False, tickfont=dict(size=11, color=text_secondary, family="Inter"),
                 ticksuffix=ysuffix, tickprefix=yprefix, title=None,
-                zeroline=x0, zerolinecolor="#C0BBB5", zerolinewidth=1.5,
+                zeroline=x0, zerolinecolor=border_color, zerolinewidth=1.5,
                 griddash="solid",
             ),
             hoverlabel=dict(
-                bgcolor="#16130F", font_color="#F5F1EC", font_family="Inter",
-                font_size=12, bordercolor="#5C5852", borderwidth=1,
+                bgcolor=hover_bg, font_color=hover_text, font_family="Inter",
+                font_size=12, bordercolor=text_secondary, borderwidth=1,
                 namelength=-1, align="left",
             ),
             hovermode="x unified",
@@ -891,10 +1019,11 @@ def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src="
 
         # Annotazione fonte con migliore formattazione
         if src:
+            src_color = "#9B9590" if not dark_mode else "#9B9590"
             fig.add_annotation(
                 text=f"<i>Fonte: {src}</i>", xref="paper", yref="paper",
                 x=0, y=-0.22, showarrow=False,
-                font=dict(size=9, color="#9B9590", family="Inter"),
+                font=dict(size=9, color=src_color, family="Inter"),
                 xanchor="left", yanchor="top",
             )
 
@@ -1008,6 +1137,15 @@ with st.sidebar:
             <div class="sb-brand-sub">Toolkit librai indipendenti</div>
         </div>
     </div>""", unsafe_allow_html=True)
+
+    # Dark mode toggle
+    col1, col2 = st.columns([3, 1])
+    with col1:
+        st.markdown('<span style="font-size: 13px; color: #8A8784;">Tema</span>', unsafe_allow_html=True)
+    with col2:
+        st.toggle("🌙", value=st.session_state.get("dark_mode", False),
+                  key="dark_mode", label_visibility="collapsed")
+
     st.divider()
 
     # Navigazione con selectbox - alternativa ai bottoni
@@ -1037,7 +1175,8 @@ with st.sidebar:
 
     if strumento == "Analisi resi":
         st.divider()
-        st.markdown('<span style="color: #5C5852; font-size: 13px; font-weight: 500;">📋 File di lavoro · ✓ = caricato</span>', unsafe_allow_html=True)
+        colors = get_theme_colors()
+        st.markdown(f'<span style="color: {colors[\"text_secondary\"]}; font-size: 13px; font-weight: 500;">📋 File di lavoro · ✓ = caricato</span>', unsafe_allow_html=True)
         st.markdown("📁 **Trascina il file CSV qui oppure clicca per sfogliare**")
         mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
         _bcol1, _bcol2 = st.columns(2)
@@ -1113,9 +1252,10 @@ if strumento == "Dashboard":
         col1, col2 = st.columns([2, 1])
         with col1:
             file_name = st.session_state.get("df_mag_name", "N/A")
-            st.markdown(f'<div style="color: #16130F; font-size: 14px; padding: 12px; background: #F5F1EC; border-radius: 6px;">'
+            colors = get_theme_colors()
+            st.markdown(f'<div style="color: {colors[\"text\"]}; font-size: 14px; padding: 12px; background: {colors[\"bg_card\"]}; border-radius: 6px; border: 1px solid {colors[\"border\"]};">'
                        f'<strong>{file_name}</strong><br>'
-                       f'<span style="font-size: 12px; color: #5C5852;">{len(df_mag):,} righe • Caricato: {DATA_SISTEMA.strftime("%d/%m/%Y")}</span>'
+                       f'<span style="font-size: 12px; color: {colors[\"text_secondary\"]};">{len(df_mag):,} righe • Caricato: {DATA_SISTEMA.strftime("%d/%m/%Y")}</span>'
                        f'</div>', unsafe_allow_html=True)
         with col2:
             if st.button("📥 Carica nuovo", key="dashboard_load_btn", use_container_width=True):
