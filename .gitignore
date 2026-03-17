@@ -1,6 +1,49 @@
-.streamlit/secrets.toml
+# Python
 __pycache__/
-*.pyc
-*.pyo
-.env
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Test files (local development)
+test_*.csv
+test_*.py
+stress_*.csv
+*_BACKUP.py
+*_DEMO.py
+*_ENHANCED.py
+
+# Backup files
+storico_gen*.csv
+storico_lug*.csv
+*_backup.*
+*.bak
+
+# Documentation scratch
+CHECKLIST_*.txt
+INDEX_*.txt
+MIGLIORAMENTI.md
+README_MIGLIORAMENTI.txt
+BENCHMARK_TEST.md
+
+# Streamlit cache
+.streamlit/
+
+# Environment
+.env
+.env.local
