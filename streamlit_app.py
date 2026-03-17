@@ -787,6 +787,25 @@ section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
     transition: border-color var(--t), background-color var(--t) !important;
 }
 
+/* ── INSIGHT CARDS ──────────────────────────────────────── */
+.insight-grid { display: flex; gap: .9rem; margin: .5rem 0 1.2rem 0; flex-wrap: wrap; }
+.insight-card {
+    flex: 1 1 180px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    display: flex; gap: .9rem; align-items: flex-start;
+}
+.insight-icon { font-size: 1.6rem; flex-shrink: 0; line-height: 1; }
+.insight-body { flex: 1; min-width: 0; }
+.insight-value { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 700; line-height: 1; }
+.insight-label { font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-top: .2rem; }
+.insight-hint  { font-size: .72rem; color: var(--text-muted); margin-top: .4rem; line-height: 1.4; }
+.insight-card.urgent  { border-left: 3px solid #B5362C; }
+.insight-card.warning { border-left: 3px solid #D97706; }
+.insight-card.ok      { border-left: 3px solid #16A34A; }
+
 /* ── ONBOARDING ─────────────────────────────────────────── */
 .onb-wrap { max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
 .onb-hero { text-align: center; margin-bottom: 2.5rem; }
@@ -1512,6 +1531,64 @@ with tab_dash:
         with col4:
             avg_rot = df_mag["Vendute_Ultimi_30_Giorni"].sum() / max(1, n_titoli)
             metric_card("Rotazione media", f"{avg_rot:.1f} copie/mese", "neutral")
+
+        # ── Segnali dal magazzino ────────────────────────────────────────────
+        st.divider()
+        section("🔦 Segnali dal magazzino")
+        try:
+            _soglia_resi = DATA_SISTEMA - timedelta(days=182)
+            _fermi = df_mag[
+                (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
+            ]
+            _lenti = df_mag[
+                (df_mag["Vendute_Ultimi_30_Giorni"] < 3) & (df_mag["Giacenza"] > 0)
+            ]
+            _val_immob = (
+                (_fermi["Prezzo_Copertina"] - _fermi["Sconto_Libreria"]) * _fermi["Giacenza"]
+            ).sum()
+            _rend_cand = df_mag[
+                (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
+            ] if "Data_Fatturazione" not in df_mag.columns else df_mag[
+                (pd.to_datetime(df_mag["Data_Fatturazione"], errors="coerce") < _soglia_resi) &
+                (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
+            ]
+
+            n_fermi   = len(_fermi)
+            n_lenti   = len(_lenti)
+            n_rend    = len(_rend_cand)
+
+            _tone_rend  = "urgent"  if n_rend  > 20 else "warning" if n_rend  > 0  else "ok"
+            _tone_lenti = "urgent"  if n_lenti > 30 else "warning" if n_lenti > 10 else "ok"
+            _tone_immob = "urgent"  if _val_immob > 3000 else "warning" if _val_immob > 1000 else "ok"
+
+            st.markdown(f"""<div class="insight-grid">
+  <div class="insight-card {_tone_rend}">
+    <div class="insight-icon">📤</div>
+    <div class="insight-body">
+      <div class="insight-value" style="color:{'#B5362C' if _tone_rend=='urgent' else '#D97706' if _tone_rend=='warning' else '#16A34A'}">{n_rend}</div>
+      <div class="insight-label">Titoli da rendere</div>
+      <div class="insight-hint">Fermi da &gt;6 mesi · vai al tab Radar</div>
+    </div>
+  </div>
+  <div class="insight-card {_tone_lenti}">
+    <div class="insight-icon">🐢</div>
+    <div class="insight-body">
+      <div class="insight-value" style="color:{'#B5362C' if _tone_lenti=='urgent' else '#D97706' if _tone_lenti=='warning' else '#16A34A'}">{n_lenti}</div>
+      <div class="insight-label">Titoli lenti</div>
+      <div class="insight-hint">&lt;3 copie/mese · valuta resa o promozione</div>
+    </div>
+  </div>
+  <div class="insight-card {_tone_immob}">
+    <div class="insight-icon">💰</div>
+    <div class="insight-body">
+      <div class="insight-value" style="color:{'#B5362C' if _tone_immob=='urgent' else '#D97706' if _tone_immob=='warning' else '#16A34A'}">{fmt_euro(_val_immob)}</div>
+      <div class="insight-label">Valore immobilizzato</div>
+      <div class="insight-hint">In titoli a zero vendite · capitale fermo</div>
+    </div>
+  </div>
+</div>""", unsafe_allow_html=True)
+        except Exception:
+            pass
 
         # ── Sezione 2: File caricato ────────────────────────────────────────
         st.divider()
