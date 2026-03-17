@@ -346,8 +346,11 @@ saved_prefs = load_preferences()
 
 for k, v in defaults.items():
     if k not in st.session_state:
-        # Se la preferenza è salvata, usala; altrimenti usa il default
-        if k in saved_prefs:
+        if k == "pagina":
+            # Priorità: 1. query param ?page= (deep link), 2. preferenza salvata, 3. default
+            _qp = st.query_params.get("page", "")
+            st.session_state[k] = _qp if _qp in PAGINE else saved_prefs.get(k, v)
+        elif k in saved_prefs:
             st.session_state[k] = saved_prefs[k]
         else:
             st.session_state[k] = v
@@ -1442,8 +1445,9 @@ with st.sidebar:
         label_visibility="collapsed"
     )
 
-    # Sincronizza il session_state con la selectbox
+    # Sincronizza il session_state con la selectbox e aggiorna l'URL
     st.session_state["pagina"] = strumento
+    st.query_params["page"] = strumento
 
     if strumento == "Analisi resi":
         st.divider()
