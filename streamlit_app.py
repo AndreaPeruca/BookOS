@@ -1019,6 +1019,9 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 /* Sidebar toggle — sempre visibile */
 button[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
 button[data-testid="collapsedControl"] span { display: none !important; }
+/* Nasconde il pulsante collapse interno alla sidebar (icona Material Symbols non caricata → mostra testo grezzo) */
+button[data-testid="stSidebarCollapseButton"],
+[data-testid="stSidebarCollapseButton"] { display: none !important; }
 
 /* ── ANIMATIONS ─────────────────────────────────────────── */
 @keyframes fadeUp {
