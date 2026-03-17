@@ -43,7 +43,7 @@ SCHEMA_MAGAZZINO = {"Titolo", "Autore", "ISBN", "Editore", "Data_Fatturazione",
 
 USATO_CONTO_VENDITA = 0.40
 
-PAGINE = ["Analisi resi", "Calcolatore margine ordine", "Gestione usato", "Analisi storica", "Simulatore ordine"]
+PAGINE = ["Dashboard", "Analisi resi", "Calcolatore margine ordine", "Gestione usato", "Analisi storica", "Simulatore ordine"]
 
 # Percorso inventario usato — stessa cartella del file .py
 INVENTORY_FILE = pathlib.Path(__file__).parent / "inventario_usato.json"
@@ -963,6 +963,7 @@ with st.sidebar:
 
     # Navigazione con selectbox - alternativa ai bottoni
     nav_labels = {
+        "Dashboard":                  "📊 Dashboard",
         "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
         "Calcolatore margine ordine": "Calcolatore margine",
         "Gestione usato":             f"Gestione usato{'  ' + str(n_usato) if n_usato > 0 else ''}",
@@ -971,9 +972,9 @@ with st.sidebar:
     }
 
     # Ottieni la pagina dal session_state, con fallback sicuro
-    pagina_salvata = st.session_state.get("pagina", "Analisi resi")
+    pagina_salvata = st.session_state.get("pagina", "Dashboard")
     if pagina_salvata not in PAGINE:
-        pagina_salvata = "Analisi resi"
+        pagina_salvata = "Dashboard"
     idx_current = PAGINE.index(pagina_salvata)
 
     strumento = st.selectbox(
@@ -1029,6 +1030,79 @@ with st.sidebar:
         st.divider()
 
     st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
+
+# ===========================================================================
+# DASHBOARD
+# ===========================================================================
+if strumento == "Dashboard":
+    page_header("Dashboard", "Panoramica della tua libreria e azioni rapide")
+
+    # ── Sezione 1: Stato Magazzino ──────────────────────────────────────────
+    if mag_ok:
+        df_mag = st.session_state.get("df_mag")
+
+        st.divider()
+        section("📦 Stato Magazzino")
+
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            n_titoli = len(df_mag)
+            metric_card("Totale titoli", f"{n_titoli:,}", "neutral")
+        with col2:
+            tot_giacenza = df_mag["Giacenza"].sum()
+            metric_card("Copie in stock", f"{tot_giacenza:,}", "positive")
+        with col3:
+            val_mag = ((df_mag["Prezzo_Copertina"] - df_mag["Sconto_Libreria"]) * df_mag["Giacenza"]).sum()
+            metric_card("Valore magazzino", fmt_euro(val_mag), "positive")
+        with col4:
+            avg_rot = df_mag["Vendute_Ultimi_30_Giorni"].sum() / max(1, n_titoli)
+            metric_card("Rotazione media", f"{avg_rot:.1f} copie/mese", "neutral")
+
+        # ── Sezione 2: File caricato ────────────────────────────────────────
+        st.divider()
+        section("📂 File Caricato")
+        col1, col2 = st.columns([2, 1])
+        with col1:
+            file_name = st.session_state.get("df_mag_name", "N/A")
+            st.markdown(f'<div style="color: #16130F; font-size: 14px; padding: 12px; background: #F5F1EC; border-radius: 6px;">'
+                       f'<strong>{file_name}</strong><br>'
+                       f'<span style="font-size: 12px; color: #5C5852;">{len(df_mag):,} righe • Caricato: {DATA_SISTEMA.strftime("%d/%m/%Y")}</span>'
+                       f'</div>', unsafe_allow_html=True)
+        with col2:
+            if st.button("📥 Carica nuovo", key="dashboard_load_btn", use_container_width=True):
+                st.info("👈 Usa il file uploader nella barra laterale")
+
+        # ── Sezione 3: Azioni rapide ────────────────────────────────────────
+        st.divider()
+        section("⚡ Azioni Rapide")
+        col1, col2, col3 = st.columns(3)
+        with col1:
+            if st.button("🔍 Analiza magazzino", key="dash_radar", use_container_width=True):
+                st.session_state["pagina"] = "Analisi resi"
+                st.rerun()
+        with col2:
+            if st.button("📊 Analisi storica", key="dash_storico", use_container_width=True):
+                st.session_state["pagina"] = "Analisi storica"
+                st.rerun()
+        with col3:
+            if st.button("🧮 Calcolo margine", key="dash_margine", use_container_width=True):
+                st.session_state["pagina"] = "Calcolatore margine ordine"
+                st.rerun()
+
+        st.divider()
+        st.markdown("""
+        <div style="padding: 12px; background: #E8F4F8; border-left: 4px solid #0284C7; border-radius: 4px; color: #0C4A6E;">
+        <strong>💡 Consiglio:</strong> Inizia caricando il tuo gestionale dalla barra laterale,
+        poi usa il Radar Salva-Cassa per identificare i titoli da rendere e i libri a rotazione lenta.
+        </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        st.divider()
+        empty_state("📦", "Nessun file caricato",
+                   "Carica il tuo gestionale dalla barra laterale per iniziare l'analisi del magazzino.")
+        st.divider()
+        st.info("👈 Usa il **file uploader** sulla sinistra per caricare il gestionale in formato CSV")
 
 # ===========================================================================
 # ANALISI RESI — Radar Salva-Cassa
