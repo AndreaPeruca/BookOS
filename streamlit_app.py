@@ -994,7 +994,7 @@ with st.sidebar:
         st.caption(f"💾 Inventario: {n_usato} libri · {INVENTORY_FILE.name}")
         st.divider()
 
-    st.markdown('<div class="sb-version">v3.1 &nbsp;·&nbsp; Uso interno</div>', unsafe_allow_html=True)
+    st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
 
 # ===========================================================================
 # ANALISI RESI — Radar Salva-Cassa
