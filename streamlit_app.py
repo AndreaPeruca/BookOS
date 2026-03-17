@@ -1146,18 +1146,106 @@ button[data-testid="collapsedControl"],
     color-scheme: dark;
 }
 
+/* Testo principale — TUTTO il contenuto diventa chiaro */
+[data-theme="dark"] .main,
+[data-theme="dark"] .main p,
+[data-theme="dark"] .main span,
+[data-theme="dark"] .main div,
+[data-theme="dark"] .main label,
+[data-theme="dark"] .main h1,
+[data-theme="dark"] .main h2,
+[data-theme="dark"] .main h3,
+[data-theme="dark"] .main h4,
+[data-theme="dark"] .main li,
+[data-theme="dark"] .main strong,
+[data-theme="dark"] .main .stMarkdown,
+[data-theme="dark"] .main .stMarkdown p,
+[data-theme="dark"] [data-testid="stAppViewContainer"] {
+    color: var(--text) !important;
+}
+
+/* Sottotitoli e testo secondario */
+[data-theme="dark"] .main .stMarkdown small,
+[data-theme="dark"] .main .stCaption,
+[data-theme="dark"] .section-title::after {
+    color: var(--text-2) !important;
+}
+
+/* Metric cards e containers */
+[data-theme="dark"] [data-testid="stMetric"],
+[data-theme="dark"] [data-testid="stMetric"] label,
+[data-theme="dark"] [data-testid="stMetric"] [data-testid="stMetricValue"],
+[data-theme="dark"] [data-testid="stMetric"] [data-testid="stMetricDelta"] {
+    color: var(--text) !important;
+}
+
+/* Selectbox, input, number_input */
+[data-theme="dark"] [data-testid="stSelectbox"] label,
+[data-theme="dark"] [data-testid="stNumberInput"] label,
+[data-theme="dark"] [data-testid="stTextInput"] label,
+[data-theme="dark"] [data-testid="stMultiSelect"] label {
+    color: var(--text) !important;
+}
+
+[data-theme="dark"] [data-baseweb="select"],
+[data-theme="dark"] [data-baseweb="input"] {
+    background-color: var(--bg-card) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
+}
+
+/* Bottoni */
+[data-theme="dark"] .stButton button {
+    color: var(--text) !important;
+    border-color: var(--border) !important;
+    background-color: var(--bg-card) !important;
+}
+[data-theme="dark"] .stButton button:hover {
+    background-color: var(--border) !important;
+}
+
+/* Divider */
+[data-theme="dark"] hr {
+    border-color: var(--border) !important;
+}
+
+/* Tabs */
+[data-theme="dark"] [data-testid="stTabs"] button {
+    color: var(--text-2) !important;
+}
+[data-theme="dark"] [data-testid="stTabs"] button[aria-selected="true"] {
+    color: var(--text) !important;
+}
+
+/* Alert boxes */
 [data-theme="dark"] [data-testid="stAlert"] {
     background-color: rgba(100, 100, 100, 0.15) !important;
     border-color: var(--border) !important;
     color: var(--text) !important;
 }
 
+/* DataFrames */
 [data-theme="dark"] [data-testid="stDataFrame"] {
     background-color: var(--bg-card) !important;
 }
-
 [data-theme="dark"] [data-testid="stDataFrame"] tbody {
     background-color: var(--bg) !important;
+}
+
+/* Expander */
+[data-theme="dark"] [data-testid="stExpander"] {
+    border-color: var(--border) !important;
+    background-color: var(--bg-card) !important;
+}
+[data-theme="dark"] [data-testid="stExpander"] summary,
+[data-theme="dark"] [data-testid="stExpander"] summary span {
+    color: var(--text) !important;
+}
+
+/* Page header custom classes */
+[data-theme="dark"] .page-header h1,
+[data-theme="dark"] .section-title {
+    color: var(--text) !important;
 }
 
 /* ── SCROLLBAR ──────────────────────────────────────────── */
