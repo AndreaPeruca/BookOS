@@ -846,7 +846,7 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     font-family: var(--font-serif);
     font-size: 1.05rem; font-weight: 600;
     color: var(--text);
-    margin: 1.35rem 0 .3rem 0;
+    margin: 1.35rem 0 .6rem 0;
     padding-left: .65rem;
     border-left: 2.5px solid var(--accent);
     line-height: 1.3;
@@ -1816,7 +1816,7 @@ if strumento == "Analisi resi":
         section("Da rendere oggi")
         colors = THEME_COLORS
         st.markdown(
-            f"<div style=\"color: {colors['text_secondary']}; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;\">"
+            f"<div style=\"color: {colors['text_secondary']}; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;\">"
             f"Fatturati tra <strong>{soglia_fs.strftime('%d/%m/%Y')}</strong> e <strong>{soglia_fe.strftime('%d/%m/%Y')}</strong><br>"
             f"Vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> copie/mese · giacenza &gt; 0"
             f"</div>",
@@ -1892,7 +1892,7 @@ if strumento == "Analisi resi":
         # ── Da tenere ────────────────────────────────────────────────────────
         section("Da tenere — in rotazione")
         st.markdown(
-            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;">'
+            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;">'
             f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong><br>'
             f'Vendite ultime 30 gg ≥ <strong>{rot_min_ui}</strong> copie/mese'
             f'</div>',
@@ -1914,7 +1914,7 @@ if strumento == "Analisi resi":
         # ── Invenduto scaduto ─────────────────────────────────────────────
         section("Invenduto scaduto")
         st.markdown(
-            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;">'
+            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;">'
             f'Fatturati prima del <strong>{soglia_inv.strftime("%d/%m/%Y")}</strong><br>'
             f'Fuori dalla finestra di resa'
             f'</div>',
@@ -2996,7 +2996,7 @@ elif strumento == "Analisi storica":
         # ── Assegnazione etichette periodo ────────────────────────────────────
         section("Configura i periodi")
         st.markdown(
-            '<div style="color: #5C5852; font-size: 13px; line-height: 1.5; margin: -15px 0 15px 0;">'
+            '<div style="color: #5C5852; font-size: 13px; line-height: 1.5; margin: 4px 0 15px 0;">'
             'I file sono ordinati <strong>alfabeticamente per nome</strong> — '
             'usa nomi come <code>gen2024.csv</code>, <code>apr2024.csv</code>, <code>lug2024.csv</code> '
             'per preservare l\'ordine cronologico senza intervento manuale. '
@@ -3241,7 +3241,7 @@ elif strumento == "Analisi storica":
                 st.divider()
                 section("Andamento del valore magazzino")
                 st.markdown(
-                    '<div style="color: #5C5852; font-size: 13px; line-height: 1.5; margin: -15px 0 15px 0;">'
+                    '<div style="color: #5C5852; font-size: 13px; line-height: 1.5; margin: 4px 0 15px 0;">'
                     'Valore a costo (prezzo copertina − sconto) dei libri in giacenza. '
                     '<strong>Crescita</strong> → accumulo invenduto. '
                     '<strong>Riduzione</strong> → rese o vendite efficaci.'
