@@ -956,9 +956,6 @@ with st.sidebar:
     if strumento != st.session_state.get("pagina"):
         st.session_state["pagina"] = strumento
 
-    # DEBUG
-    st.write(f"🔍 strumento={strumento} | session={st.session_state.get('pagina')}")
-
     if strumento == "Analisi resi":
         st.divider()
         st.caption("File di lavoro · ✓ = caricato")
@@ -1000,6 +997,9 @@ with st.sidebar:
         st.divider()
 
     st.markdown('<div class="sb-version">v3.1 &nbsp;·&nbsp; Uso interno</div>', unsafe_allow_html=True)
+
+# DEBUG — mostra stato della navigazione
+st.info(f"🔍 DEBUG: strumento='{strumento}' | session['pagina']='{st.session_state.get('pagina')}'")
 
 # ===========================================================================
 # ANALISI RESI — Radar Salva-Cassa
