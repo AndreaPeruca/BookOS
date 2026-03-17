@@ -115,7 +115,6 @@ COL_ALIASES = {
 # ---------------------------------------------------------------------------
 # PERSISTENZA INVENTARIO USATO
 # ---------------------------------------------------------------------------
-@st.cache_data(show_spinner=False)
 def load_inventory() -> list:
     try:
         if INVENTORY_FILE.exists():
@@ -131,7 +130,6 @@ def save_inventory(inv: list) -> None:
         )
     except Exception:
         pass
-    st.cache_data.clear()  # Invalida la cache dopo salvataggio
 
 
 @st.cache_data(show_spinner=False)
@@ -937,8 +935,9 @@ with st.sidebar:
     strumento = st.radio(
         label="nav",
         options=PAGINE,
-        key="pagina",  # Streamlit gestisce automaticamente il session_state
+        key="pagina",
         label_visibility="hidden",
+        on_change=lambda: None,  # Forza la riesecuzione immediata dello script
         format_func=lambda x: {
             "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
             "Calcolatore margine ordine": "Calcolatore margine",
