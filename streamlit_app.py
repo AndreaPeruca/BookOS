@@ -587,7 +587,6 @@ def empty_state(icon, title, body):
 
 def page_header(title, subtitle):
     st.markdown(f"""<div class="page-hero">
-        <div class="page-hero-eyebrow">BookStore OS</div>
         <div class="page-hero-title">{title}</div>
         <div class="page-hero-sub">{subtitle}</div>
     </div>""", unsafe_allow_html=True)
@@ -823,28 +822,17 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
 
 /* ── PAGE HERO ──────────────────────────────────────────── */
 .page-hero {
-    padding: .2rem 0 1.2rem 0;
+    padding: .4rem 0 .8rem 0;
     border-bottom: 1px solid var(--border);
-    margin-bottom: 1.75rem;
-}
-.page-hero-eyebrow {
-    font-size: .63rem; font-weight: 600;
-    letter-spacing: .14em; text-transform: uppercase;
-    color: var(--accent); margin-bottom: .5rem;
-    display: flex; align-items: center; gap: .45rem;
-}
-.page-hero-eyebrow::before {
-    content: ''; display: inline-block;
-    width: 16px; height: 2px;
-    background: var(--accent); border-radius: 1px;
+    margin-bottom: 1.2rem;
 }
 .page-hero-title {
     font-family: var(--font-serif);
-    font-size: 2.2rem; font-weight: 700;
-    color: var(--text); letter-spacing: -.02em; line-height: 1.1;
-    margin-bottom: .35rem;
+    font-size: 1.45rem; font-weight: 700;
+    color: var(--text); letter-spacing: -.01em; line-height: 1.2;
+    margin-bottom: .2rem;
 }
-.page-hero-sub { font-size: .82rem; color: var(--text); line-height: 1.55; opacity: 0.8; }
+.page-hero-sub { font-size: .8rem; color: var(--text-secondary); line-height: 1.5; }
 
 /* ── SECTION TITLES ─────────────────────────────────────── */
 .section-title {
@@ -1118,7 +1106,7 @@ button[data-testid="collapsedControl"] { display: none !important; }
         padding-left: 1.25rem !important;
         padding-right: 1.25rem !important;
     }
-    .page-hero-title { font-size: 1.8rem; }
+    .page-hero-title { font-size: 1.35rem; }
     .mc-value { font-size: 1.5rem; }
 }
 
@@ -1147,8 +1135,8 @@ button[data-testid="collapsedControl"] { display: none !important; }
     }
 
     /* Tipografia */
-    .page-hero-title   { font-size: 1.45rem; letter-spacing: -.01em; }
-    .page-hero-sub     { font-size: .78rem; }
+    .page-hero-title   { font-size: 1.25rem; letter-spacing: -.01em; }
+    .page-hero-sub     { font-size: .76rem; }
     .section-title     { font-size: .95rem; }
     .mc-value          { font-size: 1.35rem; }
     .mc-label          { font-size: .6rem; }
@@ -1198,8 +1186,8 @@ button[data-testid="collapsedControl"] { display: none !important; }
 
 /* ── RESPONSIVE — SMALL MOBILE (≤ 480px) ───────────────── */
 @media (max-width: 480px) {
-    .page-hero-title { font-size: 1.25rem; }
-    .page-hero { padding-bottom: .8rem; margin-bottom: 1.2rem; }
+    .page-hero-title { font-size: 1.1rem; }
+    .page-hero { padding-bottom: .5rem; margin-bottom: .8rem; }
     .mc-value  { font-size: 1.2rem; }
     .market-links { gap: .4rem; }
     .market-links a { font-size: .7rem; padding: 2px 8px; }
