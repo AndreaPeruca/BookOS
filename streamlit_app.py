@@ -1430,7 +1430,7 @@ if strumento == "Dashboard":
         section("⚡ Azioni Rapide")
         col1, col2, col3 = st.columns(3)
         with col1:
-            if st.button("🔍 Analiza magazzino", key="dash_radar", use_container_width=True):
+            if st.button("🔍 Analizza magazzino", key="dash_radar", use_container_width=True):
                 st.session_state["pagina"] = "Analisi resi"
                 st.rerun()
         with col2:
