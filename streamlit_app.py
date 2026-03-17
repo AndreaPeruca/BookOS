@@ -1614,11 +1614,11 @@ if strumento == "Dashboard":
 
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown("### 📥 Opzione 1: Carica il tuo file")
+            st.markdown("**📥 Opzione 1: Carica il tuo file**")
             st.markdown("Usa il **file uploader nella barra laterale** (sinistra) per caricare il CSV del tuo gestionale")
 
         with col2:
-            st.markdown("### 🎯 Opzione 2: Prova con dati demo")
+            st.markdown("**🎯 Opzione 2: Prova con dati demo**")
             if st.button("📊 Carica dati di esempio", use_container_width=True, key="demo_btn_dash"):
                 try:
                     demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
