@@ -956,6 +956,9 @@ with st.sidebar:
     if strumento != st.session_state.get("pagina"):
         st.session_state["pagina"] = strumento
 
+    # DEBUG
+    st.write(f"🔍 strumento={strumento} | session={st.session_state.get('pagina')}")
+
     if strumento == "Analisi resi":
         st.divider()
         st.caption("File di lavoro · ✓ = caricato")
