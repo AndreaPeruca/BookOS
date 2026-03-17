@@ -934,9 +934,11 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
     st.divider()
-    idx = PAGINE.index(st.session_state["pagina"]) if st.session_state["pagina"] in PAGINE else 0
-    scelta = st.radio(
-        label="nav", options=PAGINE, index=idx, label_visibility="hidden",
+    strumento = st.radio(
+        label="nav",
+        options=PAGINE,
+        key="pagina",  # Streamlit gestisce automaticamente il session_state
+        label_visibility="hidden",
         format_func=lambda x: {
             "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
             "Calcolatore margine ordine": "Calcolatore margine",
@@ -945,10 +947,8 @@ with st.sidebar:
             "Simulatore ordine":          f"Simulatore ordine{'  ✓' if sim_ok else ''}",
         }[x]
     )
-    st.session_state["pagina"] = scelta
-    strumento = scelta
 
-    if scelta == "Analisi resi":
+    if strumento == "Analisi resi":
         st.divider()
         st.caption("File di lavoro · ✓ = caricato")
         _col1, _col2 = st.columns(2)
@@ -965,7 +965,7 @@ with st.sidebar:
                         st.success("Demo caricata!")
                 except Exception as e:
                     st.error(f"Errore caricamento demo: {e}")
-    elif scelta == "Analisi storica":
+    elif strumento == "Analisi storica":
         st.divider()
         st.caption("Carica 2+ snapshot CSV · stesso formato del gestionale · ordine cronologico")
         storico_files_sb = st.file_uploader(
@@ -974,7 +974,7 @@ with st.sidebar:
             label_visibility="visible",
         ) or []
         mag_file_sb = None
-    elif scelta == "Simulatore ordine":
+    elif strumento == "Simulatore ordine":
         st.divider()
         st.caption("Usa il gestionale già caricato come base · caricalo nel Radar Salva-Cassa")
         mag_file_sb = None
