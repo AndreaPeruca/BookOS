@@ -932,20 +932,25 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
     st.divider()
-    strumento = st.radio(
-        label="nav",
-        options=PAGINE,
-        key="pagina",
-        label_visibility="hidden",
-        on_change=lambda: None,  # Forza la riesecuzione immediata dello script
-        format_func=lambda x: {
-            "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
-            "Calcolatore margine ordine": "Calcolatore margine",
-            "Gestione usato":             f"Gestione usato{'  ' + str(n_usato) if n_usato > 0 else ''}",
-            "Analisi storica":            f"Analisi storica{'  ✓' if storico_ok else ''}",
-            "Simulatore ordine":          f"Simulatore ordine{'  ✓' if sim_ok else ''}",
-        }[x]
-    )
+
+    # Navigazione con bottoni (più reattivo del radio)
+    nav_labels = {
+        "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
+        "Calcolatore margine ordine": "Calcolatore margine",
+        "Gestione usato":             f"Gestione usato{'  ' + str(n_usato) if n_usato > 0 else ''}",
+        "Analisi storica":            f"Analisi storica{'  ✓' if storico_ok else ''}",
+        "Simulatore ordine":          f"Simulatore ordine{'  ✓' if sim_ok else ''}",
+    }
+
+    cols = st.columns(1)
+    for pagina_key in PAGINE:
+        is_active = st.session_state.get("pagina") == pagina_key
+        btn_style = "▶ " if is_active else "  "
+        if st.button(btn_style + nav_labels[pagina_key], key=f"btn_{pagina_key}", use_container_width=True):
+            st.session_state["pagina"] = pagina_key
+            st.rerun()
+
+    strumento = st.session_state.get("pagina", "Analisi resi")
 
     if strumento == "Analisi resi":
         st.divider()
