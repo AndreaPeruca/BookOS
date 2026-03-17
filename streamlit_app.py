@@ -668,7 +668,27 @@ def processa_magazzino(df_raw: pd.DataFrame, soglia_invenduto, finestra_start, f
 # ---------------------------------------------------------------------------
 # CSS
 # ---------------------------------------------------------------------------
-st.markdown('<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"/>', unsafe_allow_html=True)
+st.markdown("""
+<script>
+(function() {
+    function purgeIconText() {
+        var walker = document.createTreeWalker(
+            document.body, NodeFilter.SHOW_TEXT, null, false
+        );
+        var node;
+        while ((node = walker.nextNode())) {
+            if (node.nodeValue && node.nodeValue.indexOf('keyboard_') !== -1) {
+                node.nodeValue = '';
+            }
+        }
+    }
+    purgeIconText();
+    setTimeout(purgeIconText, 300);
+    setTimeout(purgeIconText, 1000);
+    setTimeout(purgeIconText, 3000);
+})();
+</script>
+""", unsafe_allow_html=True)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
