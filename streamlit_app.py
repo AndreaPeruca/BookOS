@@ -960,7 +960,7 @@ with st.sidebar:
         with _col1:
             mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="visible")
         with _col2:
-            if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
+            if st.button("Carica demo", key="load_demo_btn"):
                 try:
                     demo_df = pd.read_csv(pathlib.Path(__file__).parent / "storico_apr2024.csv")
                     demo_df = normalize_columns(demo_df)
