@@ -671,17 +671,29 @@ def processa_magazzino(df_raw: pd.DataFrame, soglia_invenduto, finestra_start, f
 st.markdown("""
 <script>
 (function() {
-    function purgeIconTooltips() {
-        ['title', 'aria-label', 'aria-description'].forEach(function(attr) {
-            document.querySelectorAll('[' + attr + '*="keyboard_"]').forEach(function(el) {
-                el.removeAttribute(attr);
-            });
+    function purgeIconTooltips(root) {
+        (root || document).querySelectorAll('[title],[aria-label]').forEach(function(el) {
+            if ((el.title || '').indexOf('keyboard_') !== -1) el.removeAttribute('title');
+            if ((el.getAttribute('aria-label') || '').indexOf('keyboard_') !== -1) el.removeAttribute('aria-label');
         });
     }
     purgeIconTooltips();
-    setTimeout(purgeIconTooltips, 300);
-    setTimeout(purgeIconTooltips, 1000);
-    setTimeout(purgeIconTooltips, 3000);
+    /* MutationObserver: intercetta ogni re-render di Streamlit */
+    new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+            m.addedNodes.forEach(function(n) {
+                if (n.nodeType === 1) purgeIconTooltips(n);
+            });
+        });
+    }).observe(document.body, { childList: true, subtree: true });
+    /* mouseover: rimuove title prima che il browser mostri il tooltip */
+    document.addEventListener('mouseover', function(e) {
+        var el = e.target;
+        while (el && el !== document.body) {
+            if ((el.title || '').indexOf('keyboard_') !== -1) el.removeAttribute('title');
+            el = el.parentElement;
+        }
+    }, true);
 })();
 </script>
 """, unsafe_allow_html=True)
