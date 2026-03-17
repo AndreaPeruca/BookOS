@@ -671,6 +671,7 @@ def processa_magazzino(df_raw: pd.DataFrame, soglia_invenduto, finestra_start, f
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0');
 
 /* ── DESIGN SYSTEM ─────────────────────────────────────── */
 :root {
