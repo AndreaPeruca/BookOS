@@ -2,24 +2,24 @@
 
 Toolkit completo per librai indipendenti. Gestione intelligente del magazzino con analisi predittiva e simulazione ordini.
 
-## 🚀 Features
+## Features
 
-### 📦 Radar Salva-Cassa
+### Radar Salva-Cassa
 Analizza il tuo magazzino per identificare libri invenduti e con rotazione critica. Calcola il valore bloccato in giacenza e ottimizza le decisioni di resa.
 
-### 🧮 Calcolatore Margine
+### Calcolatore Margine
 Stima il margine lordo reale di un ordine considerando costi operativi (affitto, utenze, personale, altri). Valuta la convenienza di ogni acquisizione.
 
-### 📚 Gestione Usato
+### Gestione Usato
 Gestisci il tuo inventario di libri usati con sistema "conto vendita". Traccia prezzi, rotazione e marginalità con semplicità.
 
-### 📊 Analisi Storica
+###  Analisi Storica
 Confronta snapshot storici del tuo magazzino per monitorare trend di vendita e giacenza. Identifica pattern stagionali e opportunità.
 
-### 📈 Simulatore Ordine
+###  Simulatore Ordine
 Stima quante copie ordinare di un titolo nuovo, basandosi sulla rotazione storica di titoli dello stesso editore.
 
-## 📋 Requisiti Dati
+## Requisiti Dati
 
 I CSV devono contenere queste colonne:
 - **Titolo** - Nome del libro
@@ -32,28 +32,28 @@ I CSV devono contenere queste colonne:
 - **Prezzo_Copertina** - Prezzo di listino (€)
 - **Sconto_Libreria** - Sconto editore applicato (€)
 
-## 🔧 Installazione
+## Installazione
 
 ```bash
 pip install -r requirements.txt
 python -m streamlit run streamlit_app.py
 ```
 
-## 📦 Dipendenze
+## Dipendenze
 
 - streamlit >= 1.32.0
 - pandas >= 2.2.0
 - plotly >= 5.22.0
 - anthropic >= 0.25.0
 
-## 🎯 Utilizzo Rapido
+## Utilizzo Rapido
 
 1. **Carica il CSV** dal tuo gestionale (Radar Salva-Cassa)
 2. **Seleziona la sezione** dal dropdown in alto a sinistra
 3. **Analizza i dati** e prendi decisioni informate
 4. **Esporta i risultati** se necessario
 
-## 🚀 Deploy su Streamlit Cloud
+## Deploy su Streamlit Cloud
 
 ```bash
 git push origin main
@@ -61,7 +61,7 @@ git push origin main
 
 L'app si deploya automaticamente su: https://share.streamlit.io
 
-## 📝 Note Tecniche
+## Note Tecniche
 
 - **Cache dati** per performance ottimale
 - **Validazione robusta** dei file CSV
@@ -70,7 +70,7 @@ L'app si deploya automaticamente su: https://share.streamlit.io
 
 ## 📧 Support
 
-Per problemi o suggerimenti, consulta la documentazione del codice o contatta lo sviluppatore.
+Per problemi o suggerimenti, consulta la documentazione del codice.
 
 ---
 
