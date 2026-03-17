@@ -1497,7 +1497,7 @@ with st.sidebar:
     st.divider()
     if st.button("🔄 Ripristina preferenze", use_container_width=True, key="reset_prefs_btn"):
         PREFS_DEFAULTS = {
-            "dark_mode": False,
+            # "dark_mode" escluso: gestito dal widget st.toggle
             "calc_prezzo": 18.00,
             "calc_sconto": 30,
             "calc_resa_pct": 20,
