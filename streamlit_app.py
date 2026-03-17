@@ -956,7 +956,8 @@ with st.sidebar:
     if strumento == "Analisi resi":
         st.divider()
         st.caption("File di lavoro · ✓ = caricato")
-        mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="visible")
+        st.markdown("📁 **Trascina il file CSV qui oppure clicca per sfogliare**")
+        mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
         _bcol1, _bcol2 = st.columns(2)
         with _bcol1:
             if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
