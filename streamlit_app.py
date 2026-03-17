@@ -1422,13 +1422,13 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
 
-    # Dark mode toggle
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        st.markdown('<span style="font-size: 13px; color: #8A8784;">Tema</span>', unsafe_allow_html=True)
-    with col2:
-        st.toggle("🌙", value=st.session_state.get("dark_mode", False),
-                  key="dark_mode", label_visibility="collapsed")
+    # Dark mode toggle — più visibile
+    st.markdown('<span style="font-size: 12px; color: #8A8784; text-transform: uppercase; letter-spacing: 0.05em;">Tema</span>', unsafe_allow_html=True)
+    dark_enabled = st.toggle(
+        "Attiva modalità scura",
+        value=st.session_state.get("dark_mode", False),
+        key="dark_mode"
+    )
 
     st.divider()
 
@@ -1647,10 +1647,36 @@ if strumento == "Dashboard":
 
     else:
         st.divider()
-        empty_state("📦", "Nessun file caricato",
-                   "Carica il tuo gestionale dalla barra laterale per iniziare l'analisi del magazzino.")
+        st.markdown("""
+        <div style="text-align: center; padding: 40px 20px;">
+        <div style="font-size: 48px; margin-bottom: 20px;">📦</div>
+        <h3 style="margin: 0 0 10px 0;">Nessun file caricato</h3>
+        <p style="color: #666; margin-bottom: 30px;">Carica il tuo gestionale per iniziare l'analisi del magazzino</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown("### 📥 Opzione 1: Carica il tuo file")
+            st.markdown("Usa il **file uploader nella barra laterale** (sinistra) per caricare il CSV del tuo gestionale")
+
+        with col2:
+            st.markdown("### 🎯 Opzione 2: Prova con dati demo")
+            if st.button("📊 Carica dati di esempio", use_container_width=True, key="demo_btn_dash"):
+                try:
+                    demo_df = pd.read_csv(pathlib.Path(__file__).parent / "storico_apr2024.csv")
+                    demo_df = normalize_columns(demo_df)
+                    if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
+                        st.session_state["df_mag"] = demo_df
+                        st.session_state["df_mag_name"] = "storico_apr2024.csv [DEMO]"
+                        show_toast("Demo caricata! Prova il Radar Salva-Cassa", "success", 3000)
+                        st.success("✓ File demo caricato con successo!")
+                        st.rerun()
+                except Exception as e:
+                    st.error(f"Errore nel caricamento demo: {e}")
+
         st.divider()
-        st.info("👈 Usa il **file uploader** sulla sinistra per caricare il gestionale in formato CSV")
+        st.info("💡 **Consiglio:** Se non hai ancora un file CSV, prova i dati demo per scoprire tutte le funzionalità!")
 
 # ===========================================================================
 # ANALISI RESI — Radar Salva-Cassa
