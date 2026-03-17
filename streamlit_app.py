@@ -3205,8 +3205,8 @@ elif strumento == "Analisi storica":
                     else "neutral"
                 )
                 note_vm = (
-                    "↑ accumulo scorte" if delta_val_pct > 5
-                    else "↓ riduzione scorte" if delta_val_pct < -5
+                    "↑ accumulo valore" if delta_val_pct > 5
+                    else "↓ riduzione valore" if delta_val_pct < -5
                     else "→ stabile"
                 ) + f"  ({'+' if delta_val >= 0 else ''}{delta_val_pct:.1f}%)"
                 metric_card("Valore magazzino (ultima)", fmt_euro(val_ultima), tone_vm, note_vm)
