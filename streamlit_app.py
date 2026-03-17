@@ -2,7 +2,7 @@
 BookStore OS - Toolkit per Librai Indipendenti
 Dipendenze: streamlit, pandas, plotly
 Esegui con: streamlit run bookstore_os.py
-BUILD: 2026-03-17 17:45
+BUILD: 2026-03-17 18:20
 """
 
 import io
@@ -390,6 +390,7 @@ def get_or_load(key, uploaded_file, schema, label):
                 st.session_state[key] = df
                 st.session_state[name_key] = uploaded_file.name
                 status.update(label=f"✓ {label} caricato con successo", state="complete")
+                show_toast(f"{label}: {len(df):,} righe caricate", "success", 3000)
                 st.success(f"✓ {len(df):,} righe caricate")
             except ValueError as e:
                 st.error(f"⚠️ Errore di encoding: {e}")
@@ -433,6 +434,27 @@ def get_theme_colors():
             "border": "#E7E3DC",
             "accent": "#B5362C",
         }
+
+
+def show_toast(message: str, toast_type: str = "info", duration: int = 4000) -> None:
+    """Mostra una notifica toast in alto a destra dello schermo.
+
+    Args:
+        message: Testo della notifica
+        toast_type: Tipo di notifica ('success', 'error', 'warning', 'info')
+        duration: Durata in millisecondi prima di scomparire (default 4000 = 4 sec)
+    """
+    valid_types = {"success", "error", "warning", "info"}
+    if toast_type not in valid_types:
+        toast_type = "info"
+
+    st.markdown(f"""
+    <script>
+    if (window.showToast) {{
+        window.showToast('{message}', '{toast_type}', {duration});
+    }}
+    </script>
+    """, unsafe_allow_html=True)
 
 
 def create_help_tooltip(title: str, description: str, examples: str = "", recommended: str = "") -> str:
@@ -1032,6 +1054,93 @@ button[data-testid="collapsedControl"],
 }
 .main > div:first-child { animation: fadeUp .28s ease both; }
 
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(400px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes slideOutRight {
+    from { opacity: 1; transform: translateX(0); }
+    to   { opacity: 0; transform: translateX(400px); }
+}
+
+/* ── TOAST NOTIFICATIONS ────────────────────────────────── */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    pointer-events: none;
+}
+
+.toast {
+    animation: slideInRight .3s ease both;
+    padding: 14px 16px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,.15);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 320px;
+    pointer-events: auto;
+    transition: opacity var(--t);
+}
+
+.toast.success {
+    background: #ECFDF5;
+    color: #065F46;
+    border-left: 4px solid #10B981;
+}
+
+.toast.warning {
+    background: #FFFBEB;
+    color: #78350F;
+    border-left: 4px solid #F59E0B;
+}
+
+.toast.error {
+    background: #FEF2F2;
+    color: #991B1B;
+    border-left: 4px solid #EF4444;
+}
+
+.toast.info {
+    background: #EFF6FF;
+    color: #0C4A6E;
+    border-left: 4px solid #0284C7;
+}
+
+[data-theme="dark"] .toast.success {
+    background: #064E3B;
+    color: #DCFCE7;
+    border-left-color: #10B981;
+}
+
+[data-theme="dark"] .toast.warning {
+    background: #78350F;
+    color: #FEF3C7;
+    border-left-color: #F59E0B;
+}
+
+[data-theme="dark"] .toast.error {
+    background: #7F1D1D;
+    color: #FECACA;
+    border-left-color: #EF4444;
+}
+
+[data-theme="dark"] .toast.info {
+    background: #0C2D48;
+    color: #BAE6FD;
+    border-left-color: #0284C7;
+}
+
+.toast-icon { font-size: 18px; flex-shrink: 0; }
+.toast-text { flex: 1; }
+.toast.removing { animation: slideOutRight .3s ease forwards; }
+
 /* ── DARK MODE OVERRIDES ────────────────────────────────── */
 [data-theme="dark"] {
     color-scheme: dark;
@@ -1065,6 +1174,44 @@ theme_attr = 'data-theme="dark"' if dark_mode_enabled else ''
 st.markdown(f"""
 <script>
 document.documentElement.setAttribute("data-theme", {'"dark"' if dark_mode_enabled else '"light"'});
+
+// Toast notification system
+window.showToast = function(message, type = 'info', duration = 4000) {{
+    // Crea il contenitore toast se non esiste
+    let container = document.querySelector('.toast-container');
+    if (!container) {{
+        container = document.createElement('div');
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }}
+
+    // Mappa icone per tipo di notifica
+    const icons = {{
+        'success': '✓',
+        'error': '✕',
+        'warning': '⚠',
+        'info': 'ℹ'
+    }};
+
+    // Crea elemento toast
+    const toast = document.createElement('div');
+    toast.className = 'toast ' + type;
+    toast.innerHTML = `
+        <div class="toast-icon">${{icons[type] || 'ℹ'}}</div>
+        <div class="toast-text">${{message}}</div>
+    `;
+
+    // Aggiungi al contenitore
+    container.appendChild(toast);
+
+    // Auto-rimuovi dopo duration
+    setTimeout(() => {{
+        toast.classList.add('removing');
+        setTimeout(() => {{
+            toast.remove();
+        }}, 300);
+    }}, duration);
+}};
 </script>
 """, unsafe_allow_html=True)
 
@@ -1375,6 +1522,8 @@ with st.sidebar:
             # Elimina il file preferenze
             if PREFERENCES_FILE.exists():
                 PREFERENCES_FILE.unlink()
+            # Usa sia il toast che il messaggio nativo per massima visibilità
+            show_toast("Preferenze ripristinate ai valori di default", "success", 3000)
             st.success("✓ Preferenze ripristinate")
             st.rerun()
 
