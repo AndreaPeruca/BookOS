@@ -942,6 +942,55 @@ def safe_divide(numerator, denominator, default=0):
     except Exception:
         return default
 
+def export_to_excel_bytes(dataframes_dict: dict) -> bytes:
+    """
+    Esporta un dizionario di dataframe in un file Excel (in memoria).
+    Ogni dataframe diventa un foglio separato.
+
+    Args:
+        dataframes_dict: dict con {nome_foglio: dataframe}
+
+    Returns:
+        bytes: contenuto del file Excel
+    """
+    try:
+        from openpyxl import Workbook
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from io import BytesIO
+
+        output = BytesIO()
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            for sheet_name, df in dataframes_dict.items():
+                df.to_excel(writer, sheet_name=sheet_name[:31], index=False)  # Excel max 31 chars
+
+                # Formatting
+                worksheet = writer.sheets[sheet_name[:31]]
+                header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+                header_font = Font(bold=True, color="FFFFFF")
+
+                for cell in worksheet[1]:
+                    cell.fill = header_fill
+                    cell.font = header_font
+                    cell.alignment = Alignment(horizontal="center", vertical="center")
+
+                # Auto-adjust column widths
+                for column in worksheet.columns:
+                    max_length = 0
+                    column_letter = column[0].column_letter
+                    for cell in column:
+                        try:
+                            if len(str(cell.value)) > max_length:
+                                max_length = len(str(cell.value))
+                        except:
+                            pass
+                    adjusted_width = min(max_length + 2, 50)
+                    worksheet.column_dimensions[column_letter].width = adjusted_width
+
+        return output.getvalue()
+    except Exception as e:
+        st.error(f"Errore nel generare l'Excel: {e}")
+        return None
+
 # ---------------------------------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------------------------------
@@ -1185,12 +1234,25 @@ if strumento == "Analisi resi":
             st.dataframe(df_rendere_sorted, use_container_width=True, hide_index=True,
                          height=max(150, min(400, 45 + len(df_rendere_sorted) * 35)))
 
-            _clicked_rendere = st.download_button(
-                label="📥 Esporta lista da rendere (CSV)",
-                data=df_rendere_sorted.to_csv(index=False).encode("utf-8-sig"),
-                file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
-                mime="text/csv",
-            )
+            # Export buttons
+            col_csv, col_excel = st.columns(2)
+            with col_csv:
+                _clicked_rendere = st.download_button(
+                    label="📥 Esporta CSV",
+                    data=df_rendere_sorted.to_csv(index=False).encode("utf-8-sig"),
+                    file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+            with col_excel:
+                excel_data = export_to_excel_bytes({"Da rendere": df_rendere_sorted})
+                st.download_button(
+                    label="📊 Esporta Excel",
+                    data=excel_data,
+                    file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
             if _clicked_rendere:
                 save_decision_log(
                     action_type="resa",
