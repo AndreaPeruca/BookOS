@@ -1613,12 +1613,14 @@ with tab_dash:
 # ===========================================================================
 with tab_radar:
     page_header("Radar Salva-Cassa", f"Data di sistema: {DATA_SISTEMA.strftime('%d/%m/%Y')}.")
-    st.caption(
-        "Colonne richieste: `Titolo` · `Autore` · `Editore` · `ISBN` · "
-        "`Data_Fatturazione` (gg/mm/aaaa) · `Giacenza` · "
-        "`Vendute_Ultimi_30_Giorni` · `Prezzo_Copertina` · `Sconto_Libreria`"
-    )
     df_mag = st.session_state.get("df_mag")
+    if df_mag is None:
+        with st.expander("📋 Come preparare il file CSV", expanded=False):
+            st.caption(
+                "Colonne richieste: `Titolo` · `Autore` · `Editore` · `ISBN` · "
+                "`Data_Fatturazione` (gg/mm/aaaa) · `Giacenza` · "
+                "`Vendute_Ultimi_30_Giorni` · `Prezzo_Copertina` · `Sconto_Libreria`"
+            )
 
     with st.expander("⚙️ Parametri analisi", expanded=False):
         st.markdown("📋 **Adatta le soglie alle condizioni del tuo distributore.**")
