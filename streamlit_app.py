@@ -1017,14 +1017,10 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 /* Radio in main content */
 [data-testid="stRadio"] label { font-size: .85rem !important; }
 
-/* Sidebar toggle — sempre visibile; font-size:0 elimina testo grezzo senza toccare le SVG */
-button[data-testid="collapsedControl"],
-button[data-testid="stSidebarCollapseButton"] {
-    display: flex !important; visibility: visible !important; opacity: 1 !important;
-    font-size: 0 !important; color: transparent !important;
-}
-button[data-testid="collapsedControl"] svg,
-button[data-testid="stSidebarCollapseButton"] svg { display: block !important; font-size: initial !important; }
+/* Sidebar toggle esterno — sempre visibile */
+button[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
+/* Header interno alla sidebar: nascosto (contiene solo il pulsante con icona non caricata) */
+[data-testid="stSidebarHeader"] { display: none !important; }
 
 /* ── ANIMATIONS ─────────────────────────────────────────── */
 @keyframes fadeUp {
