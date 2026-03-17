@@ -1018,6 +1018,7 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 
 /* Sidebar toggle — sempre visibile */
 button[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
+button[data-testid="collapsedControl"] span { display: none !important; }
 
 /* ── ANIMATIONS ─────────────────────────────────────────── */
 @keyframes fadeUp {
