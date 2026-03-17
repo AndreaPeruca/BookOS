@@ -1171,69 +1171,38 @@ button[data-testid="collapsedControl"],
 # Apply dark mode theme based on session_state
 dark_mode_enabled = st.session_state.get("dark_mode", False)
 theme_attr = 'data-theme="dark"' if dark_mode_enabled else ''
-st.markdown(f"""
+
+# Usa components.html per eseguire JavaScript (st.markdown NON esegue <script>)
+import streamlit.components.v1 as components
+_theme_js = f"""
 <script>
-// Imposta il tema iniziale
-document.documentElement.setAttribute("data-theme", "{'dark' if dark_mode_enabled else 'light'}");
+// Imposta il tema sul documento parent (Streamlit main frame)
+const doc = window.parent.document;
+doc.documentElement.setAttribute("data-theme", "{'dark' if dark_mode_enabled else 'light'}");
 
-// Osserva i cambiamenti del session_state e aggiorna il tema
-const checkTheme = () => {{
-    const buttons = document.querySelectorAll('button');
-    for (let btn of buttons) {{
-        if (btn.textContent.includes('Attiva modalità scura')) {{
-            const isChecked = btn.getAttribute('aria-pressed') === 'true';
-            const currentTheme = document.documentElement.getAttribute('data-theme');
-            const shouldBeDark = isChecked;
-            const themeToBe = shouldBeDark ? 'dark' : 'light';
-            if (currentTheme !== themeToBe) {{
-                document.documentElement.setAttribute('data-theme', themeToBe);
-            }}
-            break;
-        }}
-    }}
-}};
-// Controlla ogni 100ms per sincronizzare il tema
-setInterval(checkTheme, 100);
-
-// Toast notification system
-window.showToast = function(message, type = 'info', duration = 4000) {{
-    // Crea il contenitore toast se non esiste
-    let container = document.querySelector('.toast-container');
+// Toast notification system sul parent
+window.parent.showToast = function(message, type, duration) {{
+    type = type || 'info';
+    duration = duration || 4000;
+    let container = doc.querySelector('.toast-container');
     if (!container) {{
-        container = document.createElement('div');
+        container = doc.createElement('div');
         container.className = 'toast-container';
-        document.body.appendChild(container);
+        doc.body.appendChild(container);
     }}
-
-    // Mappa icone per tipo di notifica
-    const icons = {{
-        'success': '✓',
-        'error': '✕',
-        'warning': '⚠',
-        'info': 'ℹ'
-    }};
-
-    // Crea elemento toast
-    const toast = document.createElement('div');
+    const icons = {{'success': '✓', 'error': '✕', 'warning': '⚠', 'info': 'ℹ'}};
+    const toast = doc.createElement('div');
     toast.className = 'toast ' + type;
-    toast.innerHTML = `
-        <div class="toast-icon">${{icons[type] || 'ℹ'}}</div>
-        <div class="toast-text">${{message}}</div>
-    `;
-
-    // Aggiungi al contenitore
+    toast.innerHTML = '<div class="toast-icon">' + (icons[type] || 'ℹ') + '</div><div class="toast-text">' + message + '</div>';
     container.appendChild(toast);
-
-    // Auto-rimuovi dopo duration
-    setTimeout(() => {{
+    setTimeout(function() {{
         toast.classList.add('removing');
-        setTimeout(() => {{
-            toast.remove();
-        }}, 300);
+        setTimeout(function() {{ toast.remove(); }}, 300);
     }}, duration);
 }};
 </script>
-""", unsafe_allow_html=True)
+"""
+components.html(_theme_js, height=0)
 
 # ---------------------------------------------------------------------------
 # ECONOMIST CHART STYLE — usato in Analisi storica e Simulatore ordine
@@ -1524,37 +1493,27 @@ with st.sidebar:
         st.markdown(f"💾 **Inventario:** {n_usato} libri · `{INVENTORY_FILE.name}`")
         st.divider()
 
-    # Settings & Preferences
-    with st.expander("⚙️ Impostazioni"):
-        st.markdown("**Preferenze**")
-        if st.button("🔄 Ripristina preferenze", use_container_width=True, key="reset_prefs_btn"):
-            # Ripristina i valori di default per le preferenze persistenti
-            PREFS_DEFAULTS = {
-                "dark_mode": False,
-                "calc_prezzo": 18.00,
-                "calc_sconto": 30,
-                "calc_resa_pct": 20,
-                "calc_affitto": 0.0,
-                "calc_utenze": 0.0,
-                "calc_personale": 0.0,
-                "calc_altri": 0.0,
-                "calc_inv_target": 30,
-            }
-            for k, v in PREFS_DEFAULTS.items():
-                st.session_state[k] = v
-            # Elimina il file preferenze
-            if PREFERENCES_FILE.exists():
-                PREFERENCES_FILE.unlink()
-            # Usa sia il toast che il messaggio nativo per massima visibilità
-            show_toast("Preferenze ripristinate ai valori di default", "success", 3000)
-            st.success("✓ Preferenze ripristinate")
-            st.rerun()
-
-        st.markdown(f"""
-        **Dati salvati:**
-        - 🌙 Tema: {'scuro' if st.session_state.get('dark_mode') else 'chiaro'}
-        - 📊 Calcolatore: {len([k for k in PERSISTENT_PREFS if k.startswith('calc_')])} impostazioni
-        """)
+    # Settings & Preferences — senza expander per evitare rendering corrotto
+    st.divider()
+    if st.button("🔄 Ripristina preferenze", use_container_width=True, key="reset_prefs_btn"):
+        PREFS_DEFAULTS = {
+            "dark_mode": False,
+            "calc_prezzo": 18.00,
+            "calc_sconto": 30,
+            "calc_resa_pct": 20,
+            "calc_affitto": 0.0,
+            "calc_utenze": 0.0,
+            "calc_personale": 0.0,
+            "calc_altri": 0.0,
+            "calc_inv_target": 30,
+        }
+        for k, v in PREFS_DEFAULTS.items():
+            st.session_state[k] = v
+        if PREFERENCES_FILE.exists():
+            PREFERENCES_FILE.unlink()
+        show_toast("Preferenze ripristinate ai valori di default", "success", 3000)
+        st.success("✓ Preferenze ripristinate")
+        st.rerun()
 
     st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
 
