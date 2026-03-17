@@ -2884,7 +2884,7 @@ elif strumento == "Analisi storica":
                 font=dict(size=15, color="#16130F", family="Inter,'Helvetica Neue',sans-serif"),
                 pad=dict(b=8, l=0),
             ),
-            margin=dict(l=8, r=48, t=(108 if subtitle else 84) if title else 24, b=76 if src else 52),
+            margin=dict(l=8, r=48, t=(130 if subtitle else 84) if title else 24, b=76 if src else 52),
             legend=dict(
                 orientation="h", yanchor="bottom", y=1.01, xanchor="left", x=0,
                 font=dict(size=11, color="#5C5852"),
