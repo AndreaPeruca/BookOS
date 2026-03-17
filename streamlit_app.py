@@ -1580,28 +1580,6 @@ with st.sidebar:
         st.markdown(f"💾 **Inventario:** {n_usato} libri · `{INVENTORY_FILE.name}`")
         st.divider()
 
-    # Settings & Preferences — senza expander per evitare rendering corrotto
-    st.divider()
-    if st.button("🔄 Ripristina preferenze", use_container_width=True, key="reset_prefs_btn"):
-        PREFS_DEFAULTS = {
-            # "dark_mode" escluso: gestito dal widget st.toggle
-            "calc_prezzo": 18.00,
-            "calc_sconto": 30,
-            "calc_resa_pct": 20,
-            "calc_affitto": 0.0,
-            "calc_utenze": 0.0,
-            "calc_personale": 0.0,
-            "calc_altri": 0.0,
-            "calc_inv_target": 30,
-        }
-        for k, v in PREFS_DEFAULTS.items():
-            st.session_state[k] = v
-        if PREFERENCES_FILE.exists():
-            PREFERENCES_FILE.unlink()
-        show_toast("Preferenze ripristinate ai valori di default", "success", 3000)
-        st.success("✓ Preferenze ripristinate")
-        st.rerun()
-
     st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
 
 # ===========================================================================
