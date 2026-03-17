@@ -1578,11 +1578,11 @@ if strumento == "Dashboard":
         col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
             st.markdown(
-                f'<div style="color: {colors[\"text\"]}; font-size: 14px; padding: 14px; background: {colors[\"bg_card\"]}; border-radius: 8px; border: 1px solid {colors[\"border\"]}; border-left: 4px solid {colors[\"accent\"]};">'
-                f'<div><strong style="font-size: 15px;">📄 {file_name}</strong></div>'
-                f'<div style="margin-top: 8px; font-size: 13px; color: {colors[\"text_secondary\"]};"><strong>{file_stats[\"total_rows\"]:,}</strong> righe</div>'
-                f'<div style="margin-top: 4px; font-size: 12px; color: {colors[\"text_muted\"]};"> Dati: {file_stats[\"date_range\"]}</div>'
-                f'</div>', unsafe_allow_html=True
+                f"<div style=\"color: {colors['text']}; font-size: 14px; padding: 14px; background: {colors['bg_card']}; border-radius: 8px; border: 1px solid {colors['border']}; border-left: 4px solid {colors['accent']};\">"
+                f"<div><strong style=\"font-size: 15px;\">📄 {file_name}</strong></div>"
+                f"<div style=\"margin-top: 8px; font-size: 13px; color: {colors['text_secondary']};\"><strong>{file_stats['total_rows']:,}</strong> righe</div>"
+                f"<div style=\"margin-top: 4px; font-size: 12px; color: {colors['text_muted']};\">(Dati: {file_stats['date_range']})</div>"
+                f"</div>", unsafe_allow_html=True
             )
 
         with col2:
@@ -1590,24 +1590,24 @@ if strumento == "Dashboard":
             quality_pct = file_stats["quality"]
             quality_color = "#22C55E" if quality_pct >= 90 else "#F59E0B" if quality_pct >= 70 else "#EF4444"
             st.markdown(
-                f'<div style="text-align: center; padding: 14px; background: {colors[\"bg_card\"]}; border-radius: 8px; border: 1px solid {colors[\"border\"]};">'
-                f'<div style="font-size: 28px; margin-bottom: 2px;">{file_stats[\"rating_icon\"]}</div>'
-                f'<div style="font-size: 11px; color: {colors[\"text_muted\"]}; text-transform: uppercase; letter-spacing: 0.05em;">Qualità</div>'
-                f'<div style="font-size: 13px; font-weight: 600; color: {colors[\"text\"]}; margin-top: 4px;">{file_stats[\"rating\"]}</div>'
-                f'<div style="font-size: 12px; color: {quality_color}; margin-top: 3px;">{quality_pct:.0f}%</div>'
-                f'</div>', unsafe_allow_html=True
+                f"<div style=\"text-align: center; padding: 14px; background: {colors['bg_card']}; border-radius: 8px; border: 1px solid {colors['border']};\">"
+                f"<div style=\"font-size: 28px; margin-bottom: 2px;\">{file_stats['rating_icon']}</div>"
+                f"<div style=\"font-size: 11px; color: {colors['text_muted']}; text-transform: uppercase; letter-spacing: 0.05em;\">Qualità</div>"
+                f"<div style=\"font-size: 13px; font-weight: 600; color: {colors['text']}; margin-top: 4px;\">{file_stats['rating']}</div>"
+                f"<div style=\"font-size: 12px; color: {quality_color}; margin-top: 3px;\">{quality_pct:.0f}%</div>"
+                f"</div>", unsafe_allow_html=True
             )
 
         with col3:
             # Coverage info
             col_cov = file_stats["col_coverage"]
             st.markdown(
-                f'<div style="text-align: center; padding: 14px; background: {colors[\"bg_card\"]}; border-radius: 8px; border: 1px solid {colors[\"border\"]};">'
-                f'<div style="font-size: 28px; margin-bottom: 2px;">📊</div>'
-                f'<div style="font-size: 11px; color: {colors[\"text_muted\"]}; text-transform: uppercase; letter-spacing: 0.05em;">Colonne</div>'
-                f'<div style="font-size: 13px; font-weight: 600; color: {colors[\"text\"]}; margin-top: 4px;">{col_cov:.0f}%</div>'
-                f'<div style="font-size: 11px; color: {colors[\"text_secondary\"]}; margin-top: 3px;">Complete</div>'
-                f'</div>', unsafe_allow_html=True
+                f"<div style=\"text-align: center; padding: 14px; background: {colors['bg_card']}; border-radius: 8px; border: 1px solid {colors['border']};\">"
+                f"<div style=\"font-size: 28px; margin-bottom: 2px;\">📊</div>"
+                f"<div style=\"font-size: 11px; color: {colors['text_muted']}; text-transform: uppercase; letter-spacing: 0.05em;\">Colonne</div>"
+                f"<div style=\"font-size: 13px; font-weight: 600; color: {colors['text']}; margin-top: 4px;\">{col_cov:.0f}%</div>"
+                f"<div style=\"font-size: 11px; color: {colors['text_secondary']}; margin-top: 3px;\">Complete</div>"
+                f"</div>", unsafe_allow_html=True
             )
 
         # Bottone carica nuovo
@@ -1835,9 +1835,7 @@ if strumento == "Analisi resi":
             n_filtrati = len(df_filtered)
             if n_filtrati < n_totali:
                 st.info(f"📊 Filtri applicati: {n_filtrati} di {n_totali} titoli ({((n_filtrati/n_totali)*100):.0f}%)")
-        else:
-            # Se i filtri non sono espansi, usa comunque il dataframe completo
-            df_filtered = df_rendere.copy()
+
         totale_recuperabile = df_rendere["Valore_Recuperabile"].sum()
 
         st.divider()
@@ -1862,10 +1860,10 @@ if strumento == "Analisi resi":
         section("Da rendere oggi")
         colors = get_theme_colors()
         st.markdown(
-            f'<div style="color: {colors[\"text_secondary\"]}; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;">'
-            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong><br>'
-            f'Vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> copie/mese · giacenza &gt; 0'
-            f'</div>',
+            f"<div style=\"color: {colors['text_secondary']}; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;\">"
+            f"Fatturati tra <strong>{soglia_fs.strftime('%d/%m/%Y')}</strong> e <strong>{soglia_fe.strftime('%d/%m/%Y')}</strong><br>"
+            f"Vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> copie/mese · giacenza &gt; 0"
+            f"</div>",
             unsafe_allow_html=True
         )
         if df_filtered.empty:
