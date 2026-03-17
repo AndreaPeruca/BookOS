@@ -1173,7 +1173,7 @@ dark_mode_enabled = st.session_state.get("dark_mode", False)
 theme_attr = 'data-theme="dark"' if dark_mode_enabled else ''
 st.markdown(f"""
 <script>
-document.documentElement.setAttribute("data-theme", {'"dark"' if dark_mode_enabled else '"light"'});
+document.documentElement.setAttribute("data-theme", "{'dark' if dark_mode_enabled else 'light'}");
 
 // Toast notification system
 window.showToast = function(message, type = 'info', duration = 4000) {{
