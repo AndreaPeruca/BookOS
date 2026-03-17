@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "BookStore OS",
+      "runtimeExecutable": "C:\\Users\\Andrea\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+      "runtimeArgs": ["-m", "streamlit", "run", "bookstore_os.py", "--server.headless", "true", "--server.port", "8501"],
+      "port": 8501,
+      "cwd": "C:\\Users\\Andrea\\Desktop\\BookOS"
+    }
+  ]
+}

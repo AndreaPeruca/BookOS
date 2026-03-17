@@ -1,0 +1,6 @@
+Titolo,Autore,ISBN,Editore,Data_Fatturazione,Giacenza,Vendute_Ultimi_30_Giorni,Prezzo_Copertina,Sconto_Libreria
+Titolo Alpha Esclusivo,Autore A,9788803000001,Einaudi,15/03/2022,8,0,14.00,4.20
+Titolo Beta Esclusivo,Autore A,9788803000002,Einaudi,20/04/2022,6,0,13.00,3.90
+Titolo Gamma Esclusivo,Autore A,9788803000003,Einaudi,10/06/2022,5,1,12.00,3.60
+Titolo Delta Esclusivo,Autore B,9788803000004,Feltrinelli,15/07/2022,7,0,15.00,4.50
+Titolo Epsilon Esclusivo,Autore B,9788803000005,Feltrinelli,20/01/2022,4,0,11.00,3.30

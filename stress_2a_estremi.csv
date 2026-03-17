@@ -1,0 +1,11 @@
+Titolo,Autore,ISBN,Editore,Data_Fatturazione,Giacenza,Vendute_Ultimi_30_Giorni,Prezzo_Copertina,Sconto_Libreria
+Test Giac Zero,Autore Test,9788802000001,Einaudi,15/03/2022,0,0,15.00,4.50
+Test Vendite Impossibili,Autore Test,9788802000002,Einaudi,20/04/2022,2,15,19.00,5.70
+Test Sconto Maggiore Del Prezzo,Autore Test,9788802000003,Einaudi,10/06/2022,5,1,10.00,15.00
+Test Magazzino Enorme,Autore Test,9788802000004,Einaudi,15/07/2022,999,2,14.00,4.20
+Test Prezzo Quasi Zero,Autore Test,9788802000005,Feltrinelli,20/01/2022,3,0,0.01,0.00
+Test Giac Zero Con Vendite,Autore Test,9788802000006,Feltrinelli,15/02/2022,0,5,13.00,3.90
+Test Normale A,Autore Test,9788802000007,Feltrinelli,10/03/2022,8,1,14.00,4.20
+Test Normale B,Autore Test,9788802000008,Mondadori,20/04/2022,7,1,16.00,4.80
+Test Normale C,Autore Test,9788802000009,Mondadori,15/05/2022,5,0,12.00,3.60
+Test Sconto Uguale Al Prezzo,Autore Test,9788802000010,Mondadori,20/06/2022,4,0,13.00,13.00

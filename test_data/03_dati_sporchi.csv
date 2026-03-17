@@ -1,0 +1,19 @@
+Titolo,Autore,Editore,ISBN,Data_Fatturazione,Giacenza,Vendute_Ultimi_30_Giorni,Prezzo_Copertina,Sconto_Libreria
+Titolo con virgola sì,Autore Virgola,Editore X,9788801002001,01/01/2024,5,2,13.00,3.90
+"Titolo con ""apici"" doppi",Autore Apici,Editore Y,9788801002002,02/01/2024,3,1,12.00,3.60
+Titolo normale,Autore Accenti àèìòù,Editore Z,9788801002003,03/01/2024,4,0,11.00,3.30
+,Autore Senza Titolo,Editore W,9788801002004,04/01/2024,2,0,10.00,3.00
+Titolo Senza Autore,,Editore V,9788801002005,05/01/2024,1,0,9.00,2.70
+Senza ISBN,,Editore U,,06/01/2024,6,3,14.00,4.20
+ISBN non valido,Autore Test,Editore T,12345,07/01/2024,3,1,13.00,3.90
+Prezzo mancante,Autore Test2,Editore S,9788801002008,08/01/2024,4,2,,3.60
+Giacenza zero,Autore Test3,Editore R,9788801002009,09/01/2024,0,0,12.00,3.60
+Venduto più della giacenza,Autore Test4,Editore Q,9788801002010,10/01/2024,2,10,13.00,3.90
+Data formato ISO,Autore Test5,Editore P,9788801002011,2024-03-15,5,1,14.00,4.20
+Data completamente assente,Autore Test6,Editore O,9788801002012,,3,0,11.00,3.30
+Sconto negativo,Autore Test7,Editore N,9788801002013,13/01/2024,4,2,12.00,-3.60
+Sconto sopra copertina,Autore Test8,Editore M,9788801002014,14/01/2024,5,1,13.00,99.00
+Prezzo zero,Autore Test9,Editore L,9788801002015,15/01/2024,3,0,0,0
+Giacenza negativa,Autore Test10,Editore K,9788801002016,16/01/2024,-5,2,14.00,4.20
+Tutto vuoto,,,,,,,,
+ Riga con spazi extra , Autore Spazi , Editore J ,9788801002018,18/01/2024, 3 , 1 , 12.00 , 3.60
