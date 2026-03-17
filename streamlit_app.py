@@ -2,7 +2,7 @@
 BookStore OS - Toolkit per Librai Indipendenti
 Dipendenze: streamlit, pandas, plotly
 Esegui con: streamlit run bookstore_os.py
-BUILD: 2026-03-17 16:15
+BUILD: 2026-03-17 17:00
 """
 
 import io
@@ -432,6 +432,80 @@ def get_theme_colors():
             "bg_card": "#FFFFFF",
             "border": "#E7E3DC",
             "accent": "#B5362C",
+        }
+
+
+def get_file_stats(df: pd.DataFrame, schema: set) -> dict:
+    """Calcola statistiche dettagliate del file per lo stato display."""
+    try:
+        total_rows = len(df)
+
+        # Verifica colonne presenti
+        present_cols = set(df.columns)
+        missing_cols = schema - present_cols
+        col_coverage = (len(present_cols & schema) / len(schema)) * 100 if schema else 100
+
+        # Calcola quality score basato su:
+        # - Completamento colonne (30%)
+        # - Righe non nulle (40%)
+        # - Validità date (20%)
+        # - Intervallo dati (10%)
+
+        # Non-null coverage
+        non_null_pct = (df.notna().sum().sum() / (len(df) * len(df.columns))) * 100
+
+        # Data range per Data_Fatturazione
+        date_range = "N/A"
+        if "Data_Fatturazione" in df.columns:
+            try:
+                dates = pd.to_datetime(df["Data_Fatturazione"], errors='coerce')
+                valid_dates = dates.dropna()
+                if len(valid_dates) > 0:
+                    min_date = valid_dates.min()
+                    max_date = valid_dates.max()
+                    date_range = f"{min_date.strftime('%d/%m/%y')} → {max_date.strftime('%d/%m/%y')}"
+            except:
+                pass
+
+        # Quality score (0-100)
+        quality = (col_coverage * 0.3) + (non_null_pct * 0.4) + ((len(valid_dates) / max(1, len(df))) * 20 if "Data_Fatturazione" in df.columns else 20)
+        quality = min(100, max(0, quality))
+
+        # Quality rating
+        if quality >= 95:
+            rating = "Eccellente"
+            rating_icon = "🟢"
+        elif quality >= 85:
+            rating = "Buona"
+            rating_icon = "🟡"
+        elif quality >= 70:
+            rating = "Accettabile"
+            rating_icon = "🟠"
+        else:
+            rating = "Problematica"
+            rating_icon = "🔴"
+
+        return {
+            "total_rows": total_rows,
+            "col_coverage": col_coverage,
+            "non_null_pct": non_null_pct,
+            "quality": quality,
+            "rating": rating,
+            "rating_icon": rating_icon,
+            "date_range": date_range,
+            "missing_cols": missing_cols,
+        }
+    except Exception as e:
+        logging.error(f"Errore in get_file_stats(): {e}")
+        return {
+            "total_rows": len(df),
+            "col_coverage": 0,
+            "non_null_pct": 0,
+            "quality": 0,
+            "rating": "Errore",
+            "rating_icon": "❌",
+            "date_range": "N/A",
+            "missing_cols": set(),
         }
 
 def metric_card(label, value, tone="neutral", note=""):
@@ -1322,17 +1396,57 @@ if strumento == "Dashboard":
         # ── Sezione 2: File caricato ────────────────────────────────────────
         st.divider()
         section("📂 File Caricato")
-        col1, col2 = st.columns([2, 1])
+
+        # Calcola statistiche file
+        file_stats = get_file_stats(df_mag, SCHEMA_MAGAZZINO)
+        file_name = st.session_state.get("df_mag_name", "N/A")
+        colors = get_theme_colors()
+
+        # Card principale con info file
+        col1, col2, col3 = st.columns([2, 1, 1])
         with col1:
-            file_name = st.session_state.get("df_mag_name", "N/A")
-            colors = get_theme_colors()
-            st.markdown(f'<div style="color: {colors[\"text\"]}; font-size: 14px; padding: 12px; background: {colors[\"bg_card\"]}; border-radius: 6px; border: 1px solid {colors[\"border\"]};">'
-                       f'<strong>{file_name}</strong><br>'
-                       f'<span style="font-size: 12px; color: {colors[\"text_secondary\"]};">{len(df_mag):,} righe • Caricato: {DATA_SISTEMA.strftime("%d/%m/%Y")}</span>'
-                       f'</div>', unsafe_allow_html=True)
+            st.markdown(
+                f'<div style="color: {colors[\"text\"]}; font-size: 14px; padding: 14px; background: {colors[\"bg_card\"]}; border-radius: 8px; border: 1px solid {colors[\"border\"]}; border-left: 4px solid {colors[\"accent\"]};">'
+                f'<div><strong style="font-size: 15px;">📄 {file_name}</strong></div>'
+                f'<div style="margin-top: 8px; font-size: 13px; color: {colors[\"text_secondary\"]};"><strong>{file_stats[\"total_rows\"]:,}</strong> righe</div>'
+                f'<div style="margin-top: 4px; font-size: 12px; color: {colors[\"text_muted\"]};"> Dati: {file_stats[\"date_range\"]}</div>'
+                f'</div>', unsafe_allow_html=True
+            )
+
         with col2:
-            if st.button("📥 Carica nuovo", key="dashboard_load_btn", use_container_width=True):
-                st.info("👈 Usa il file uploader nella barra laterale")
+            # Quality score
+            quality_pct = file_stats["quality"]
+            quality_color = "#22C55E" if quality_pct >= 90 else "#F59E0B" if quality_pct >= 70 else "#EF4444"
+            st.markdown(
+                f'<div style="text-align: center; padding: 14px; background: {colors[\"bg_card\"]}; border-radius: 8px; border: 1px solid {colors[\"border\"]};">'
+                f'<div style="font-size: 28px; margin-bottom: 2px;">{file_stats[\"rating_icon\"]}</div>'
+                f'<div style="font-size: 11px; color: {colors[\"text_muted\"]}; text-transform: uppercase; letter-spacing: 0.05em;">Qualità</div>'
+                f'<div style="font-size: 13px; font-weight: 600; color: {colors[\"text\"]}; margin-top: 4px;">{file_stats[\"rating\"]}</div>'
+                f'<div style="font-size: 12px; color: {quality_color}; margin-top: 3px;">{quality_pct:.0f}%</div>'
+                f'</div>', unsafe_allow_html=True
+            )
+
+        with col3:
+            # Coverage info
+            col_cov = file_stats["col_coverage"]
+            st.markdown(
+                f'<div style="text-align: center; padding: 14px; background: {colors[\"bg_card\"]}; border-radius: 8px; border: 1px solid {colors[\"border\"]};">'
+                f'<div style="font-size: 28px; margin-bottom: 2px;">📊</div>'
+                f'<div style="font-size: 11px; color: {colors[\"text_muted\"]}; text-transform: uppercase; letter-spacing: 0.05em;">Colonne</div>'
+                f'<div style="font-size: 13px; font-weight: 600; color: {colors[\"text\"]}; margin-top: 4px;">{col_cov:.0f}%</div>'
+                f'<div style="font-size: 11px; color: {colors[\"text_secondary\"]}; margin-top: 3px;">Complete</div>'
+                f'</div>', unsafe_allow_html=True
+            )
+
+        # Bottone carica nuovo
+        if st.button("📥 Carica nuovo file", use_container_width=True, key="dashboard_load_btn"):
+            st.info("👈 Usa il file uploader nella barra laterale")
+
+        # Alert se qualità è bassa
+        if file_stats["quality"] < 70 and file_stats["missing_cols"]:
+            st.warning(f"⚠️ File con possibili problemi. Colonne mancanti: {', '.join(sorted(file_stats['missing_cols']))}")
+        elif file_stats["quality"] < 85:
+            st.info(f"💡 Qualità file: {file_stats['rating']}. Controlla i dati mancanti.")
 
         # ── Sezione 3: Azioni rapide ────────────────────────────────────────
         st.divider()
