@@ -2,7 +2,7 @@
 BookStore OS - Toolkit per Librai Indipendenti
 Dipendenze: streamlit, pandas, plotly
 Esegui con: streamlit run bookstore_os.py
-BUILD: 2026-03-17 17:00
+BUILD: 2026-03-17 17:45
 """
 
 import io
@@ -433,6 +433,26 @@ def get_theme_colors():
             "border": "#E7E3DC",
             "accent": "#B5362C",
         }
+
+
+def create_help_tooltip(title: str, description: str, examples: str = "", recommended: str = "") -> str:
+    """Crea un tooltip HTML formattato per i parametri.
+
+    Args:
+        title: Titolo del parametro
+        description: Descrizione del parametro
+        examples: Esempi di valori (opzionale)
+        recommended: Valore consigliato (opzionale)
+
+    Returns:
+        Stringa HTML completa del tooltip
+    """
+    content = description
+    if recommended:
+        content += f"\n\n📌 **Consigliato:** {recommended}"
+    if examples:
+        content += f"\n\n💡 **Esempi:** {examples}"
+    return content
 
 
 def get_file_stats(df: pd.DataFrame, schema: set) -> dict:
@@ -1496,15 +1516,36 @@ if strumento == "Analisi resi":
     with st.expander("⚙️ Parametri analisi", expanded=False):
         st.markdown("📋 **Adatta le soglie alle condizioni del tuo distributore.**")
         _c1, _c2, _c3 = st.columns(3)
+
+        help_invenduto = create_help_tooltip(
+            "Invenduto dopo",
+            "Titoli fatturati prima di questo numero di giorni fa sono considerati invenduto scaduto e disponibili per resa.",
+            "90 giorni (3 mesi), 180 giorni (6 mesi), 365 giorni (1 anno)",
+            "182 giorni (6 mesi) — equilibrio tra resa tempestiva e rotazione lenta"
+        )
         _giorni_invenduto = _c1.number_input(
             "Invenduto dopo (giorni)", min_value=30, max_value=730, value=182, step=30,
-            help="Titoli fatturati prima di questo numero di giorni fa sono considerati invenduto scaduto.")
+            help=help_invenduto)
+
+        help_finestra = create_help_tooltip(
+            "Ampiezza finestra resa",
+            "Durata della finestra temporale di resa a partire dalla soglia invenduto. Identifica i titoli in scadenza di resa.",
+            "7 giorni (una settimana), 15 giorni (due settimane), 30 giorni (un mese)",
+            "30 giorni — consente una corretta gestione dei tempi di resa al distributore"
+        )
         _giorni_finestra  = _c2.number_input(
             "Ampiezza finestra resa (giorni)", min_value=7, max_value=90, value=30, step=7,
-            help="Quanti giorni dura la finestra di resa a partire dalla soglia invenduto.")
+            help=help_finestra)
+
+        help_rotazione = create_help_tooltip(
+            "Rotazione minima",
+            "Soglia di vendite mensili. Titoli con vendite inferiori sono classificati lenti e candidati a resa.",
+            "1-2 copie/mese (titoli molto lenti), 3-5 copie/mese (titoli lenti), 5+ copie/mese (titoli stabili)",
+            "3 copie/mese — criterio benchmark per identificare titoli in stallo"
+        )
         _rot_min          = _c3.number_input(
             "Rotazione minima (copie/mese)", min_value=1, max_value=20, value=int(SOGLIA_ROTAZIONE_MIN), step=1,
-            help="Sotto questa soglia il titolo viene classificato 'da rendere'.")
+            help=help_rotazione)
         soglia_inv  = DATA_SISTEMA - timedelta(days=int(_giorni_invenduto))
         soglia_fs   = soglia_inv
         soglia_fe   = soglia_fs + timedelta(days=int(_giorni_finestra))
@@ -1959,28 +2000,85 @@ elif strumento == "Calcolatore margine ordine":
     with col_form:
         section("Parametri ordine")
         st.text_input("Titolo (opzionale)", placeholder="es. Il nome della rosa", key="calc_titolo")
+
+        help_prezzo = create_help_tooltip(
+            "Prezzo di copertina",
+            "Prezzo al pubblico stampato sulla copertina del libro.",
+            "15,99 € (narrativa), 24,90 € (saggistica), 12,50 € (tascabile)",
+            "Dipende dal genere — verificare il prezzo sulla copertina"
+        )
         prezzo   = st.number_input("Prezzo di copertina (€)", min_value=0.01, value=st.session_state["calc_prezzo"],
-                                   step=0.50, format="%.2f", key="calc_prezzo")
+                                   step=0.50, format="%.2f", key="calc_prezzo", help=help_prezzo)
+
+        help_sconto = create_help_tooltip(
+            "Sconto editore",
+            "Percentuale di sconto applicata dall'editore sul prezzo di copertina.",
+            "30% (sconto standard), 35% (titoli bestseller), 40% (ordini grandi)",
+            "30-35% — sconto medio per librerie indipendenti"
+        )
         sconto   = st.slider("Sconto editore (%)", min_value=0, max_value=60,
-                             value=st.session_state["calc_sconto"], key="calc_sconto")
+                             value=st.session_state["calc_sconto"], key="calc_sconto", help=help_sconto)
+
+        help_quantita = create_help_tooltip(
+            "Copie ordinate",
+            "Numero di copie che intendi ordinare in questo ordine.",
+            "5 copie (titolo nuovo), 15 copie (bestseller), 50 copie (ordine grande)",
+            "Dipende dalla rotazione prevista — considerare lo spazio disponibile"
+        )
         quantita = st.number_input("Copie ordinate", min_value=1, value=st.session_state["calc_quantita"],
-                                   step=1, key="calc_quantita")
+                                   step=1, key="calc_quantita", help=help_quantita)
+
         if st.session_state["calc_resa_pct"] > 80:
             st.session_state["calc_resa_pct"] = 80
+
+        help_resa = create_help_tooltip(
+            "Resa stimata",
+            "Percentuale di copie che prevedi di rendere al distributore (non vendute).",
+            "10% (titolo popolare), 25% (titolo medio), 50% (esperimento rischio)",
+            "20-30% — media del settore per titoli nuovi"
+        )
         resa_pct = st.slider("Resa stimata (%)", min_value=0, max_value=80,
-                             value=st.session_state["calc_resa_pct"], step=5, key="calc_resa_pct")
+                             value=st.session_state["calc_resa_pct"], step=5, key="calc_resa_pct", help=help_resa)
 
         st.divider()
         section("Costi fissi mensili")
         st.caption("Inserisci i costi fissi per calcolare il break-even reale della libreria.")
-        affitto   = st.number_input("Affitto (€/mese)",           min_value=0.0,
-                                    value=st.session_state["calc_affitto"],   step=50.0,  format="%.0f", key="calc_affitto")
-        utenze    = st.number_input("Utenze (€/mese)",            min_value=0.0,
-                                    value=st.session_state["calc_utenze"],    step=10.0,  format="%.0f", key="calc_utenze")
-        personale = st.number_input("Personale (€/mese)",         min_value=0.0,
-                                    value=st.session_state["calc_personale"], step=50.0,  format="%.0f", key="calc_personale")
+
+        help_affitto = create_help_tooltip(
+            "Affitto",
+            "Canone mensile di affitto dei locali della libreria.",
+            "500 € (piccolo spazio), 1500 € (spazio medio), 3000 € (grande negozio)",
+            "Inserisci il valore reale per la tua libreria"
+        )
+        affitto   = st.number_input("Affitto (€/mese)", min_value=0.0,
+                                    value=st.session_state["calc_affitto"],   step=50.0,  format="%.0f", key="calc_affitto", help=help_affitto)
+
+        help_utenze = create_help_tooltip(
+            "Utenze",
+            "Costi mensili di elettricità, gas, acqua e internet.",
+            "100 € (piccolo), 300 € (medio), 500 € (grande con riscaldamento)",
+            "Calcola dalla media annuale"
+        )
+        utenze    = st.number_input("Utenze (€/mese)", min_value=0.0,
+                                    value=st.session_state["calc_utenze"],    step=10.0,  format="%.0f", key="calc_utenze", help=help_utenze)
+
+        help_personale = create_help_tooltip(
+            "Personale",
+            "Costo fisso mensile per retribuzione del personale (stipendi netti).",
+            "1000 € (proprietario part-time), 2500 € (un dipendente), 5000 € (due dipendenti)",
+            "Non includere contributi — solo il netto"
+        )
+        personale = st.number_input("Personale (€/mese)", min_value=0.0,
+                                    value=st.session_state["calc_personale"], step=50.0,  format="%.0f", key="calc_personale", help=help_personale)
+
+        help_altri = create_help_tooltip(
+            "Altri costi",
+            "Costi fissi rimanenti: assicurazioni, manutenzione, forniture, tasse, software.",
+            "200 € (base minima), 500 € (copertura completa)",
+            "Sommare: assicurazione (~50€) + manutenzione (~30€) + forniture (~50€) + altri"
+        )
         altri     = st.number_input("Altri costi fissi (€/mese)", min_value=0.0,
-                                    value=st.session_state["calc_altri"],     step=10.0,  format="%.0f", key="calc_altri")
+                                    value=st.session_state["calc_altri"],     step=10.0,  format="%.0f", key="calc_altri", help=help_altri)
         costi_fissi_totali = affitto + utenze + personale + altri
 
     with col_results:
