@@ -346,7 +346,7 @@ def get_or_load(key, uploaded_file, schema, label):
                 st.session_state[key] = df
                 st.session_state[name_key] = uploaded_file.name
                 status.update(label=f"✓ {label} caricato con successo", state="complete")
-                st.success(f"✓ {label} caricato: **{len(df)} righe** · colonne valide")
+                st.success(f"✓ {len(df):,} righe caricate")
             except ValueError as e:
                 st.error(f"⚠️ Errore di encoding: {e}")
                 st.info("💡 Assicurati che il file sia un CSV valido (utf-8, latin-1, o cp1252).")
