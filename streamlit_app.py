@@ -115,6 +115,7 @@ COL_ALIASES = {
 # ---------------------------------------------------------------------------
 # PERSISTENZA INVENTARIO USATO
 # ---------------------------------------------------------------------------
+@st.cache_data(show_spinner=False)
 def load_inventory() -> list:
     try:
         if INVENTORY_FILE.exists():
@@ -130,8 +131,10 @@ def save_inventory(inv: list) -> None:
         )
     except Exception:
         pass
+    st.cache_data.clear()  # Invalida la cache dopo salvataggio
 
 
+@st.cache_data(show_spinner=False)
 def load_storico() -> list:
     try:
         if STORICO_FILE.exists():
