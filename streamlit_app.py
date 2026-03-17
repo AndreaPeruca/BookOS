@@ -2,7 +2,7 @@
 BookStore OS - Toolkit per Librai Indipendenti
 Dipendenze: streamlit, pandas, plotly
 Esegui con: streamlit run bookstore_os.py
-BUILD: 2026-03-17 14:31
+BUILD: 2026-03-17 15:42
 """
 
 import io
