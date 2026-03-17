@@ -956,11 +956,10 @@ with st.sidebar:
     if strumento == "Analisi resi":
         st.divider()
         st.caption("File di lavoro · ✓ = caricato")
-        _col1, _col2 = st.columns(2)
-        with _col1:
-            mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="visible")
-        with _col2:
-            if st.button("Carica demo", key="load_demo_btn"):
+        mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="visible")
+        _bcol1, _bcol2 = st.columns(2)
+        with _bcol1:
+            if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
                 try:
                     demo_df = pd.read_csv(pathlib.Path(__file__).parent / "storico_apr2024.csv")
                     demo_df = normalize_columns(demo_df)
@@ -970,6 +969,8 @@ with st.sidebar:
                         st.success("Demo caricata!")
                 except Exception as e:
                     st.error(f"Errore caricamento demo: {e}")
+        with _bcol2:
+            pass  # Spazio vuoto per simmetria
     elif strumento == "Analisi storica":
         st.divider()
         st.caption("Carica 2+ snapshot CSV · stesso formato del gestionale · ordine cronologico")
