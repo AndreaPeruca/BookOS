@@ -1173,7 +1173,27 @@ dark_mode_enabled = st.session_state.get("dark_mode", False)
 theme_attr = 'data-theme="dark"' if dark_mode_enabled else ''
 st.markdown(f"""
 <script>
+// Imposta il tema iniziale
 document.documentElement.setAttribute("data-theme", "{'dark' if dark_mode_enabled else 'light'}");
+
+// Osserva i cambiamenti del session_state e aggiorna il tema
+const checkTheme = () => {{
+    const buttons = document.querySelectorAll('button');
+    for (let btn of buttons) {{
+        if (btn.textContent.includes('Attiva modalità scura')) {{
+            const isChecked = btn.getAttribute('aria-pressed') === 'true';
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const shouldBeDark = isChecked;
+            const themeToBe = shouldBeDark ? 'dark' : 'light';
+            if (currentTheme !== themeToBe) {{
+                document.documentElement.setAttribute('data-theme', themeToBe);
+            }}
+            break;
+        }}
+    }}
+}};
+// Controlla ogni 100ms per sincronizzare il tema
+setInterval(checkTheme, 100);
 
 // Toast notification system
 window.showToast = function(message, type = 'info', duration = 4000) {{
