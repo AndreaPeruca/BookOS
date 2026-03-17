@@ -1463,7 +1463,7 @@ with st.sidebar:
     if strumento == "Analisi resi":
         st.divider()
         colors = get_theme_colors()
-        st.markdown(f'<span style="color: {colors[\"text_secondary\"]}; font-size: 13px; font-weight: 500;">📋 File di lavoro · ✓ = caricato</span>', unsafe_allow_html=True)
+        st.markdown(f'<span style="color: {colors["text_secondary"]}; font-size: 13px; font-weight: 500;">📋 File di lavoro · ✓ = caricato</span>', unsafe_allow_html=True)
         st.markdown("📁 **Trascina il file CSV qui oppure clicca per sfogliare**")
         mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
         _bcol1, _bcol2 = st.columns(2)
