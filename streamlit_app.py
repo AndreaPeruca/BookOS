@@ -933,7 +933,7 @@ with st.sidebar:
     </div>""", unsafe_allow_html=True)
     st.divider()
 
-    # Navigazione con bottoni (più reattivo del radio)
+    # Navigazione con selectbox - alternativa ai bottoni
     nav_labels = {
         "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
         "Calcolatore margine ordine": "Calcolatore margine",
@@ -942,15 +942,19 @@ with st.sidebar:
         "Simulatore ordine":          f"Simulatore ordine{'  ✓' if sim_ok else ''}",
     }
 
-    cols = st.columns(1)
-    for pagina_key in PAGINE:
-        is_active = st.session_state.get("pagina") == pagina_key
-        btn_style = "▶ " if is_active else "  "
-        if st.button(btn_style + nav_labels[pagina_key], key=f"btn_{pagina_key}", use_container_width=True):
-            st.session_state["pagina"] = pagina_key
-            st.rerun()
+    idx_current = PAGINE.index(st.session_state.get("pagina", "Analisi resi"))
+    strumento = st.selectbox(
+        "Vai a:",
+        PAGINE,
+        index=idx_current,
+        key="pagina_select",
+        format_func=lambda x: nav_labels[x],
+        label_visibility="collapsed"
+    )
 
-    strumento = st.session_state.get("pagina", "Analisi resi")
+    # Aggiorna session_state se il valore è cambiato
+    if strumento != st.session_state.get("pagina"):
+        st.session_state["pagina"] = strumento
 
     if strumento == "Analisi resi":
         st.divider()
