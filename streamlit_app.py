@@ -1499,13 +1499,12 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
 
-    # Dark mode toggle — più visibile
-    st.markdown('<span style="font-size: 12px; color: #8A8784; text-transform: uppercase; letter-spacing: 0.05em;">Tema</span>', unsafe_allow_html=True)
-    dark_enabled = st.toggle(
-        "Attiva modalità scura",
-        value=st.session_state.get("dark_mode", False),
-        key="dark_mode"
-    )
+    # Dark mode — icona luna/sole
+    _is_dark = st.session_state.get("dark_mode", False)
+    _icon = "☀️  Tema chiaro" if _is_dark else "🌙  Tema scuro"
+    if st.button(_icon, use_container_width=True, key="dark_toggle_btn"):
+        st.session_state["dark_mode"] = not _is_dark
+        st.rerun()
 
     st.divider()
 
