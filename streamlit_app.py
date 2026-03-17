@@ -1016,12 +1016,11 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 /* Radio in main content */
 [data-testid="stRadio"] label { font-size: .85rem !important; }
 
-/* Sidebar toggle — sempre visibile */
-button[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
-button[data-testid="collapsedControl"] span { display: none !important; }
-/* Nasconde il pulsante collapse interno alla sidebar (icona Material Symbols non caricata → mostra testo grezzo) */
-button[data-testid="stSidebarCollapseButton"],
-[data-testid="stSidebarCollapseButton"] { display: none !important; }
+/* Sidebar toggle — sempre visibile; testo grezzo icona Material nascosto */
+button[data-testid="collapsedControl"],
+button[data-testid="stSidebarCollapseButton"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
+button[data-testid="collapsedControl"] span,
+button[data-testid="stSidebarCollapseButton"] span { display: none !important; }
 
 /* ── ANIMATIONS ─────────────────────────────────────────── */
 @keyframes fadeUp {
