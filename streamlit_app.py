@@ -1205,6 +1205,22 @@ button[data-testid="collapsedControl"] { display: none !important; }
     .market-links a { font-size: .7rem; padding: 2px 8px; }
 }
 
+/* ── UPLOAD BANNER ──────────────────────────────────────── */
+.upload-banner {
+    background: var(--bg-card);
+    border: 1.5px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+}
+.upload-banner-icon { font-size: 1.8rem; flex-shrink: 0; }
+.upload-banner-text { flex: 1; }
+.upload-banner-title { font-weight: 600; font-size: .95rem; color: var(--text); margin-bottom: .2rem; }
+.upload-banner-sub { font-size: .8rem; color: var(--text-muted); }
+
 /* ── TABS NAVIGAZIONE ─────────────────────────────────── */
 .stTabs [data-baseweb="tab-list"] {
     gap: 0;
@@ -1436,34 +1452,40 @@ with st.sidebar:
             <div class="sb-brand-sub">Toolkit librai indipendenti</div>
         </div>
     </div>""", unsafe_allow_html=True)
+    if n_usato > 0:
+        st.divider()
+        st.markdown(f"💾 **Inventario:** {n_usato} libri · `{INVENTORY_FILE.name}`")
+    st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
 
-    st.divider()
-    colors = THEME_COLORS
-    st.markdown(f'<span style="color: {colors["text_secondary"]}; font-size: 13px; font-weight: 500;">📂 Gestionale magazzino</span>', unsafe_allow_html=True)
-    mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
-    _bcol1, _bcol2 = st.columns(2)
-    with _bcol1:
-        if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
+# ── Upload banner (sopra i tab, visibile solo senza file caricato) ────────
+if not mag_ok:
+    st.markdown("""<div class="upload-banner">
+        <div class="upload-banner-icon">📂</div>
+        <div class="upload-banner-text">
+            <div class="upload-banner-title">Carica il gestionale per iniziare</div>
+            <div class="upload-banner-sub">CSV esportato dal tuo software · oppure prova i dati demo</div>
+        </div>
+    </div>""", unsafe_allow_html=True)
+    _ub_file, _ub_demo = st.columns([3, 1])
+    with _ub_file:
+        mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
+    with _ub_demo:
+        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
+        if st.button("Demo", use_container_width=True, key="load_demo_btn"):
             try:
                 demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
                 demo_df = normalize_columns(demo_df)
                 if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
                     st.session_state["df_mag"] = demo_df
                     st.session_state["df_mag_name"] = "storico_apr2024.csv [DEMO]"
-                    st.success("Demo caricata!")
+                    st.rerun()
             except Exception as e:
-                st.error(f"Errore caricamento demo: {e}")
-    with _bcol2:
-        pass  # Spazio vuoto per simmetria
+                st.error(f"Errore: {e}")
+else:
+    mag_file_sb = None
 
-    get_or_load("df_mag", mag_file_sb, SCHEMA_MAGAZZINO, "Gestionale magazzino")
-    st.divider()
-
-    if n_usato > 0:
-        st.markdown(f"💾 **Inventario:** {n_usato} libri · `{INVENTORY_FILE.name}`")
-        st.divider()
-
-    st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
+get_or_load("df_mag", mag_file_sb, SCHEMA_MAGAZZINO, "Gestionale magazzino")
+mag_ok = st.session_state["df_mag"] is not None
 
 # Navigazione a tab
 (tab_dash, tab_radar, tab_scaffale, tab_calc, tab_usato, tab_storico, tab_sim) = st.tabs([
