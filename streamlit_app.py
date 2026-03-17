@@ -1432,28 +1432,33 @@ with st.sidebar:
 
     st.divider()
 
-    # Navigazione con bottoni
-    st.markdown('<span style="font-size: 12px; color: #8A8784; text-transform: uppercase; letter-spacing: 0.05em;">Navigazione</span>', unsafe_allow_html=True)
-
-    # Bottoni di navigazione semplici e stabili
-    nav_buttons = {
-        "Dashboard": "📊 Dashboard",
-        "Analisi resi": f"🎯 Radar{' ✓' if mag_ok else ''}",
-        "Calcolatore margine ordine": "🧮 Margine ordine",
-        "Gestione usato": f"♻️ Usato{f' ({n_usato})' if n_usato > 0 else ''}",
-        "Analisi storica": f"📈 Storica{' ✓' if storico_ok else ''}",
-        "Simulatore ordine": f"🛒 Simulatore{' ✓' if sim_ok else ''}",
+    # Navigazione con selectbox - alternativa ai bottoni
+    nav_labels = {
+        "Dashboard":                  "📊 Dashboard",
+        "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
+        "Calcolatore margine ordine": "Calcolatore margine",
+        "Gestione usato":             f"Gestione usato{'  ' + str(n_usato) if n_usato > 0 else ''}",
+        "Analisi storica":            f"Analisi storica{'  ✓' if storico_ok else ''}",
+        "Simulatore ordine":          f"Simulatore ordine{'  ✓' if sim_ok else ''}",
     }
 
+    # Ottieni la pagina dal session_state, con fallback sicuro
     pagina_salvata = st.session_state.get("pagina", "Dashboard")
+    if pagina_salvata not in PAGINE:
+        pagina_salvata = "Dashboard"
+    idx_current = PAGINE.index(pagina_salvata)
 
-    for pagina_key, pagina_label in nav_buttons.items():
-        if st.button(pagina_label, use_container_width=True, key=f"nav_{pagina_key}"):
-            st.session_state["pagina"] = pagina_key
-            st.rerun()
+    # Selectbox SENZA key per evitare conflitti con session_state
+    strumento = st.selectbox(
+        "Vai a:",
+        PAGINE,
+        index=idx_current,
+        format_func=lambda x: nav_labels[x],
+        label_visibility="collapsed"
+    )
 
-    # Per il resto del codice, usa il session_state direttamente
-    strumento = st.session_state.get("pagina", "Dashboard")
+    # Sincronizza il session_state con la selectbox
+    st.session_state["pagina"] = strumento
 
     if strumento == "Analisi resi":
         st.divider()
