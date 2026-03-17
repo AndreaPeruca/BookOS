@@ -2940,9 +2940,24 @@ elif strumento == "Analisi storica":
         "Confronta più snapshot del gestionale per leggere l'evoluzione del magazzino nel tempo.",
     )
 
-    # Ordina per nome file (alfabetico, case-insensitive) — convenzione
-    # gen2024/apr2024/lug2024 garantisce l'ordine cronologico automaticamente.
-    files_storico = sorted(storico_files_sb, key=lambda f: f.name.lower())
+    # Mock file per il caricamento demo — compatibile con f.read() e f.name
+    class _FakeFile:
+        def __init__(self, name, data):
+            self.name = name
+            self._data = data
+        def read(self):
+            return self._data
+
+    # Se l'utente ha premuto "Carica demo", i bytes sono in session_state
+    _demo_bytes = st.session_state.get("_storico_demo_bytes", [])
+    if _demo_bytes and not storico_files_sb:
+        files_storico = [_FakeFile(n, b) for n, b in _demo_bytes]
+    else:
+        # File reali caricati → annulla eventuale demo precedente
+        if storico_files_sb:
+            st.session_state.pop("_storico_demo_bytes", None)
+        # Ordina per nome file (alfabetico) — apr2024 < ott2024 garantisce ordine cronologico
+        files_storico = sorted(storico_files_sb, key=lambda f: f.name.lower())
 
     # ── Guard: file non caricati ─────────────────────────────────────────────
     if not files_storico:
@@ -2951,6 +2966,21 @@ elif strumento == "Analisi storica":
             "Carica 2 o più file CSV dalla barra laterale — stesso formato del gestionale. "
             "Ogni file è una fotografia dello stock in un momento diverso.",
         )
+        st.divider()
+        # Bottone demo
+        _, _dc2, _ = st.columns([1, 1, 1])
+        with _dc2:
+            if st.button("📊 Carica dati demo (Apr/Ott 2024)", use_container_width=True, key="storico_demo_btn"):
+                try:
+                    _p = pathlib.Path(__file__).parent
+                    st.session_state["_storico_demo_bytes"] = [
+                        ("apr2024.csv", (_p / "apr2024.csv").read_bytes()),
+                        ("ott2024.csv", (_p / "ott2024.csv").read_bytes()),
+                    ]
+                    show_toast("Demo storico caricato: Apr 2024 → Ott 2024", "success", 3000)
+                    st.rerun()
+                except Exception as _e:
+                    st.error(f"Errore caricamento demo: {_e}")
         st.divider()
         st.caption(
             "**Come preparare gli snapshot:** esporta il gestionale ogni mese o trimestre. "
