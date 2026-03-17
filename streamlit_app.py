@@ -318,7 +318,6 @@ defaults = {
     "pagina":           "Dashboard",
     "df_mag":           None,
     "df_mag_name":      None,
-    "storico_up":       [],
     # Calcolatore — valori persistono tra navigazioni
     "calc_titolo":      "",
     "calc_prezzo":      18.00,
@@ -1406,7 +1405,7 @@ def export_to_excel_bytes(dataframes_dict: dict) -> bytes:
 # ---------------------------------------------------------------------------
 mag_ok      = st.session_state["df_mag"] is not None
 n_usato     = len(st.session_state["inventario_usato"])
-storico_ok  = len(st.session_state.get("storico_up") or []) >= 2
+storico_ok  = len(st.session_state.get("storico_up") or st.session_state.get("_storico_demo_bytes") or []) >= 2
 sim_ok      = mag_ok
 storico_files_sb = []
 
