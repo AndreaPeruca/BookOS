@@ -593,7 +593,7 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     color: var(--text); letter-spacing: -.02em; line-height: 1.1;
     margin-bottom: .35rem;
 }
-.page-hero-sub { font-size: .82rem; color: var(--text-muted); line-height: 1.55; }
+.page-hero-sub { font-size: .82rem; color: var(--text); line-height: 1.55; opacity: 0.8; }
 
 /* ── SECTION TITLES ─────────────────────────────────────── */
 .section-title {
