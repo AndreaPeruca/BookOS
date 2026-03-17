@@ -2,7 +2,7 @@
 BookStore OS - Toolkit per Librai Indipendenti
 Dipendenze: streamlit, pandas, plotly
 Esegui con: streamlit run bookstore_os.py
-BUILD: 2026-03-17 15:42
+BUILD: 2026-03-17 16:15
 """
 
 import io
@@ -48,6 +48,7 @@ PAGINE = ["Dashboard", "Analisi resi", "Calcolatore margine ordine", "Gestione u
 # Percorso inventario usato — stessa cartella del file .py
 INVENTORY_FILE = pathlib.Path(__file__).parent / "inventario_usato.json"
 STORICO_FILE   = pathlib.Path(__file__).parent / "storico_decisioni.json"
+PREFERENCES_FILE = pathlib.Path(__file__).parent / "preferenze.json"
 
 # ---------------------------------------------------------------------------
 # BENCHMARK DI SETTORE — fonte: AIE / ISTAT 2022
@@ -128,6 +129,27 @@ def save_inventory(inv: list) -> None:
     try:
         INVENTORY_FILE.write_text(
             json.dumps(inv, ensure_ascii=False, indent=2), encoding="utf-8"
+        )
+    except Exception:
+        pass
+
+
+def load_preferences() -> dict:
+    """Carica le preferenze utente salvate (tema, colonne visibili, etc.)"""
+    try:
+        if PREFERENCES_FILE.exists():
+            data = json.loads(PREFERENCES_FILE.read_text(encoding="utf-8"))
+            return data
+    except Exception:
+        pass
+    return {}
+
+
+def save_preferences(prefs: dict) -> None:
+    """Salva le preferenze utente in JSON."""
+    try:
+        PREFERENCES_FILE.write_text(
+            json.dumps(prefs, ensure_ascii=False, indent=2), encoding="utf-8"
         )
     except Exception:
         pass
@@ -253,6 +275,19 @@ def isbn_lookup(isbn: str) -> dict:
 if "inventario_usato" not in st.session_state:
     st.session_state["inventario_usato"] = load_inventory()
 
+# Preferenze persistenti (salvate su file)
+PERSISTENT_PREFS = {
+    "dark_mode",
+    "calc_prezzo",
+    "calc_sconto",
+    "calc_resa_pct",
+    "calc_affitto",
+    "calc_utenze",
+    "calc_personale",
+    "calc_altri",
+    "calc_inv_target",
+}
+
 defaults = {
     "svuota_confirm":   False,
     "pagina":           "Dashboard",
@@ -278,9 +313,17 @@ defaults = {
     "u_isbn_input":     "",
     "_usato_added":     "",
 }
+
+# Carica preferenze salvate
+saved_prefs = load_preferences()
+
 for k, v in defaults.items():
     if k not in st.session_state:
-        st.session_state[k] = v
+        # Se la preferenza è salvata, usala; altrimenti usa il default
+        if k in saved_prefs:
+            st.session_state[k] = saved_prefs[k]
+        else:
+            st.session_state[k] = v
 
 # ---------------------------------------------------------------------------
 # UTILITY
@@ -1216,6 +1259,36 @@ with st.sidebar:
     if n_usato > 0:
         st.markdown(f"💾 **Inventario:** {n_usato} libri · `{INVENTORY_FILE.name}`")
         st.divider()
+
+    # Settings & Preferences
+    with st.expander("⚙️ Impostazioni"):
+        st.markdown("**Preferenze**")
+        if st.button("🔄 Ripristina preferenze", use_container_width=True, key="reset_prefs_btn"):
+            # Ripristina i valori di default per le preferenze persistenti
+            PREFS_DEFAULTS = {
+                "dark_mode": False,
+                "calc_prezzo": 18.00,
+                "calc_sconto": 30,
+                "calc_resa_pct": 20,
+                "calc_affitto": 0.0,
+                "calc_utenze": 0.0,
+                "calc_personale": 0.0,
+                "calc_altri": 0.0,
+                "calc_inv_target": 30,
+            }
+            for k, v in PREFS_DEFAULTS.items():
+                st.session_state[k] = v
+            # Elimina il file preferenze
+            if PREFERENCES_FILE.exists():
+                PREFERENCES_FILE.unlink()
+            st.success("✓ Preferenze ripristinate")
+            st.rerun()
+
+        st.markdown(f"""
+        **Dati salvati:**
+        - 🌙 Tema: {'scuro' if st.session_state.get('dark_mode') else 'chiaro'}
+        - 📊 Calcolatore: {len([k for k in PERSISTENT_PREFS if k.startswith('calc_')])} impostazioni
+        """)
 
     st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
 
@@ -3197,3 +3270,24 @@ Non include costi indiretti (affitto, personale, costi di reso eventuali).
 > la stagionalità, le promozioni dell'editore e la fedeltà della tua clientela
 > prima di effettuare l'ordine. La stima è un punto di partenza, non un verdetto.
 """)
+
+
+# ===========================================================================
+# PREFERENCES PERSISTENCE — salva le preferenze alla fine di ogni sessione
+# ===========================================================================
+@st.cache_data(show_spinner=False)
+def _should_save_prefs():
+    """Marker per evitare salvataggio multiplo nella stessa sessione."""
+    return True
+
+if _should_save_prefs():
+    # Estrai le preferenze persistenti da session_state
+    prefs_to_save = {}
+    for pref_key in PERSISTENT_PREFS:
+        if pref_key in st.session_state:
+            prefs_to_save[pref_key] = st.session_state[pref_key]
+
+    # Salva le preferenze
+    if prefs_to_save:
+        save_preferences(prefs_to_save)
+
