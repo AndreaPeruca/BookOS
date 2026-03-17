@@ -970,7 +970,12 @@ with st.sidebar:
         "Simulatore ordine":          f"Simulatore ordine{'  ✓' if sim_ok else ''}",
     }
 
-    idx_current = PAGINE.index(st.session_state.get("pagina", "Analisi resi"))
+    # Ottieni la pagina dal session_state, con fallback sicuro
+    pagina_salvata = st.session_state.get("pagina", "Analisi resi")
+    if pagina_salvata not in PAGINE:
+        pagina_salvata = "Analisi resi"
+    idx_current = PAGINE.index(pagina_salvata)
+
     strumento = st.selectbox(
         "Vai a:",
         PAGINE,
