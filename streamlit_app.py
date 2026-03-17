@@ -1499,10 +1499,10 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
 
-    # Dark mode — icona luna/sole
+    # Dark mode — solo icona
     _is_dark = st.session_state.get("dark_mode", False)
-    _icon = "☀️  Tema chiaro" if _is_dark else "🌙  Tema scuro"
-    if st.button(_icon, use_container_width=True, key="dark_toggle_btn"):
+    _icon = "☀️" if _is_dark else "🌙"
+    if st.button(_icon, key="dark_toggle_btn"):
         st.session_state["dark_mode"] = not _is_dark
         st.rerun()
 
