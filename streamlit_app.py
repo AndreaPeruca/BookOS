@@ -721,11 +721,6 @@ section[data-testid="stSidebar"] > div {
 }
 
 
-/* Nasconde il pulsante collapse/expand — sidebar sempre visibile */
-button[data-testid="collapsedControl"],
-[data-testid="collapsedControl"] {
-    display: none !important;
-}
 
 /* Blanket: tutto il testo nella sidebar va schiarito — il textColor globale
    (#16130F) dal config.toml altrimenti rende invisibile il testo sul nero */
