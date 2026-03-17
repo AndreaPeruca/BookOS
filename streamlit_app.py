@@ -1448,14 +1448,17 @@ with st.sidebar:
         pagina_salvata = "Dashboard"
     idx_current = PAGINE.index(pagina_salvata)
 
+    # Selectbox SENZA key per evitare conflitti con session_state
     strumento = st.selectbox(
         "Vai a:",
         PAGINE,
         index=idx_current,
-        key="pagina",
         format_func=lambda x: nav_labels[x],
         label_visibility="collapsed"
     )
+
+    # Sincronizza il session_state con la selectbox
+    st.session_state["pagina"] = strumento
 
     if strumento == "Analisi resi":
         st.divider()
