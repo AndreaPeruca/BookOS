@@ -2,7 +2,7 @@
 BookStore OS - Toolkit per Librai Indipendenti
 Dipendenze: streamlit, pandas, plotly
 Esegui con: streamlit run bookstore_os.py
-BUILD: 2026-03-17 18:20
+BUILD: 2026-03-17 19:05
 """
 
 import io
@@ -1708,6 +1708,107 @@ if strumento == "Analisi resi":
             st.warning(f"⚠️ {msg}")
 
         df, df_scaduto, df_tenere, df_rendere = seg["df"], seg["scaduto"], seg["tenere"], seg["rendere"]
+
+        # ── Filtri avanzati ─────────────────────────────────────────────────
+        with st.expander("🔎 Filtri avanzati", expanded=False):
+            st.markdown("**Filtra i titoli da rendere** per editore, giacenza, valore e ricerca libera.")
+            filter_cols = st.columns([1, 1, 1.2, 1.2])
+
+            # Filtro Editore
+            with filter_cols[0]:
+                editori_available = sorted(df_rendere["Editore"].unique()) if "Editore" in df_rendere.columns and not df_rendere.empty else []
+                filtro_editore = st.multiselect(
+                    "Editore",
+                    options=editori_available,
+                    default=[],
+                    key="filter_editore",
+                    help="Seleziona uno o più editori per filtrare i titoli"
+                )
+
+            # Filtro Giacenza min-max
+            with filter_cols[1]:
+                giacenza_min, giacenza_max = st.columns(2, gap="small")
+                with giacenza_min:
+                    min_giac = st.number_input(
+                        "Min giacenza",
+                        min_value=0,
+                        value=0,
+                        step=1,
+                        key="filter_giac_min",
+                        help="Mostra solo titoli con giacenza ≥ questo valore"
+                    )
+                with giacenza_max:
+                    max_giac = st.number_input(
+                        "Max giacenza",
+                        min_value=0,
+                        value=999999,
+                        step=1,
+                        key="filter_giac_max",
+                        help="Mostra solo titoli con giacenza ≤ questo valore"
+                    )
+
+            # Filtro Valore (€)
+            with filter_cols[2]:
+                value_min, value_max = st.columns(2, gap="small")
+                with value_min:
+                    min_val = st.number_input(
+                        "Min valore (€)",
+                        min_value=0.0,
+                        value=0.0,
+                        step=1.0,
+                        key="filter_val_min",
+                        format="%.2f",
+                        help="Mostra solo titoli con valore ≥ questo importo"
+                    )
+                with value_max:
+                    max_val = st.number_input(
+                        "Max valore (€)",
+                        min_value=0.0,
+                        value=999999.0,
+                        step=100.0,
+                        key="filter_val_max",
+                        format="%.2f",
+                        help="Mostra solo titoli con valore ≤ questo importo"
+                    )
+
+            # Filtro ricerca libera
+            with filter_cols[3]:
+                ricerca_libera = st.text_input(
+                    "Cerca in titolo/autore",
+                    placeholder="es. Calvino, Narrativa",
+                    key="filter_ricerca",
+                    help="Ricerca case-insensitive nei campi Titolo e Autore"
+                )
+
+            # Applica filtri
+            df_filtered = df_rendere.copy()
+
+            if filtro_editore:
+                df_filtered = df_filtered[df_filtered["Editore"].isin(filtro_editore)]
+
+            if "Giacenza" in df_filtered.columns:
+                df_filtered = df_filtered[(df_filtered["Giacenza"] >= min_giac) & (df_filtered["Giacenza"] <= max_giac)]
+
+            if "Valore_Recuperabile" in df_filtered.columns:
+                df_filtered = df_filtered[(df_filtered["Valore_Recuperabile"] >= min_val) & (df_filtered["Valore_Recuperabile"] <= max_val)]
+
+            if ricerca_libera:
+                ricerca_lower = ricerca_libera.lower()
+                mask = pd.Series([False] * len(df_filtered))
+                if "Titolo" in df_filtered.columns:
+                    mask |= df_filtered["Titolo"].fillna("").str.lower().str.contains(ricerca_lower, regex=False)
+                if "Autore" in df_filtered.columns:
+                    mask |= df_filtered["Autore"].fillna("").str.lower().str.contains(ricerca_lower, regex=False)
+                df_filtered = df_filtered[mask]
+
+            # Mostra conteggio filtrato
+            n_totali = len(df_rendere)
+            n_filtrati = len(df_filtered)
+            if n_filtrati < n_totali:
+                st.info(f"📊 Filtri applicati: {n_filtrati} di {n_totali} titoli ({((n_filtrati/n_totali)*100):.0f}%)")
+        else:
+            # Se i filtri non sono espansi, usa comunque il dataframe completo
+            df_filtered = df_rendere.copy()
         totale_recuperabile = df_rendere["Valore_Recuperabile"].sum()
 
         st.divider()
@@ -1727,25 +1828,26 @@ if strumento == "Analisi resi":
         st.divider()
 
         # ── Da rendere ──────────────────────────────────────────────────────
-        if not df_rendere.empty:
+        if not df_filtered.empty:
             st.markdown('<span class="urgency-bar">Azione richiesta</span>', unsafe_allow_html=True)
         section("Da rendere oggi")
+        colors = get_theme_colors()
         st.markdown(
-            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;">'
+            f'<div style="color: {colors[\"text_secondary\"]}; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;">'
             f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong><br>'
             f'Vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> copie/mese · giacenza &gt; 0'
             f'</div>',
             unsafe_allow_html=True
         )
-        if df_rendere.empty:
+        if df_filtered.empty:
             empty_state("✓", "Nessun titolo da rendere",
-                        "Non ci sono titoli in scadenza di resa per questa finestra.")
+                        "Non ci sono titoli in scadenza di resa per questa finestra (o nessuno corrisponde ai filtri selezionati).")
         else:
             cols_r = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
                                    "Giacenza","Vendute_Ultimi_30_Giorni",
                                    "Prezzo_Copertina","Sconto_Libreria","Valore_Recuperabile"]
-                      if c in df_rendere.columns]
-            df_rendere_sorted = df_rendere[cols_r].sort_values("Valore_Recuperabile", ascending=False).copy()
+                      if c in df_filtered.columns]
+            df_rendere_sorted = df_filtered[cols_r].sort_values("Valore_Recuperabile", ascending=False).copy()
             if "Data_Fatturazione" in df_rendere_sorted.columns:
                 df_rendere_sorted["Data_Fatturazione"] = df_rendere_sorted["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
             st.dataframe(df_rendere_sorted, use_container_width=True, hide_index=True,
