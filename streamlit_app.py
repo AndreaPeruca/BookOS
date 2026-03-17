@@ -302,7 +302,15 @@ def validate_schema(df, required, label):
     missing = required - set(df.columns)
     if missing:
         st.error(f"**{label}** — colonne mancanti: `{'`, `'.join(sorted(missing))}`.")
-        st.caption("Colonne trovate nel file: " + ", ".join(f"`{c}`" for c in sorted(df.columns)))
+        with st.expander("💡 **Come risolvere?**"):
+            st.markdown(f"""
+            **Colonne richieste:** `{'` · `'.join(sorted(required))}`
+
+            **Colonne trovate nel file:** {', '.join(f'`{c}`' for c in sorted(df.columns)) or '(nessuna)'}
+
+            **Soluzione:** Assicurati che il file CSV contenga tutte le colonne richieste,
+            oppure verifica che il file sia quello corretto dal tuo gestionale.
+            """)
         return False
     return True
 
@@ -320,16 +328,35 @@ def get_or_load(key, uploaded_file, schema, label):
         return st.session_state.get(key)
     name_key = f"{key}_name"
     if st.session_state.get(name_key) != uploaded_file.name:
-        try:
-            df = load_csv(uploaded_file.read())
-            df = normalize_columns(df)
-            if not validate_schema(df, schema, label):
+        with st.status(f"📂 Caricamento di **{label}**…", expanded=False) as status:
+            try:
+                st.write(f"📖 Lettura file: `{uploaded_file.name}`")
+                df = load_csv(uploaded_file.read())
+                st.write(f"✓ File letto · {len(df)} righe")
+
+                st.write("🔧 Normalizzazione colonne…")
+                df = normalize_columns(df)
+                st.write(f"✓ Colonne normalizzate")
+
+                st.write("✓ Validazione schema…")
+                if not validate_schema(df, schema, label):
+                    status.update(label="❌ Schema non valido", state="error")
+                    return None
+
+                st.session_state[key] = df
+                st.session_state[name_key] = uploaded_file.name
+                status.update(label=f"✓ {label} caricato con successo", state="complete")
+                st.success(f"✓ {label} caricato: **{len(df)} righe** · colonne valide")
+            except ValueError as e:
+                st.error(f"⚠️ Errore di encoding: {e}")
+                st.info("💡 Assicurati che il file sia un CSV valido (utf-8, latin-1, o cp1252).")
+                status.update(label="❌ Errore di encoding", state="error")
                 return None
-            st.session_state[key] = df
-            st.session_state[name_key] = uploaded_file.name
-        except Exception as e:
-            st.error(f"Errore nel caricamento di **{label}**: {e}")
-            return None
+            except Exception as e:
+                st.error(f"⚠️ Errore nel caricamento: {e}")
+                st.info("💡 Contatta il supporto se il problema persiste.")
+                status.update(label="❌ Errore sconosciuto", state="error")
+                return None
     return st.session_state.get(key)
 
 _TONE = {
@@ -955,7 +982,7 @@ with st.sidebar:
 
     if strumento == "Analisi resi":
         st.divider()
-        st.caption("File di lavoro · ✓ = caricato")
+        st.markdown('<span style="color: #5C5852; font-size: 13px; font-weight: 500;">📋 File di lavoro · ✓ = caricato</span>', unsafe_allow_html=True)
         st.markdown("📁 **Trascina il file CSV qui oppure clicca per sfogliare**")
         mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
         _bcol1, _bcol2 = st.columns(2)
@@ -975,10 +1002,11 @@ with st.sidebar:
     elif strumento == "Analisi storica":
         st.divider()
         st.markdown("📊 **Carica 2+ snapshot CSV** · stesso formato del gestionale · ordine cronologico")
+        st.markdown("📁 **Trascina i file CSV qui oppure clicca per sfogliare**")
         storico_files_sb = st.file_uploader(
             "Snapshot storici", type="csv",
             accept_multiple_files=True, key="storico_up",
-            label_visibility="visible",
+            label_visibility="collapsed",
         ) or []
         mag_file_sb = None
     elif strumento == "Simulatore ordine":
@@ -1011,7 +1039,7 @@ if strumento == "Analisi resi":
     df_mag = st.session_state.get("df_mag")
 
     with st.expander("⚙️ Parametri analisi", expanded=False):
-        st.markdown("📋 Adatta le soglie alle condizioni del tuo distributore.")
+        st.markdown("📋 **Adatta le soglie alle condizioni del tuo distributore.**")
         _c1, _c2, _c3 = st.columns(3)
         _giorni_invenduto = _c1.number_input(
             "Invenduto dopo (giorni)", min_value=30, max_value=730, value=182, step=30,
@@ -1028,7 +1056,8 @@ if strumento == "Analisi resi":
         rot_min_ui  = int(_rot_min)
 
     if df_mag is not None:
-        seg = processa_magazzino(df_mag, soglia_inv, soglia_fs, soglia_fe, rot_min_ui)
+        with st.spinner("🔄 Analisi magazzino in corso…"):
+            seg = processa_magazzino(df_mag, soglia_inv, soglia_fs, soglia_fe, rot_min_ui)
 
         for msg in seg["warnings"]:
             st.warning(f"⚠️ {msg}")
@@ -1056,9 +1085,12 @@ if strumento == "Analisi resi":
         if not df_rendere.empty:
             st.markdown('<span class="urgency-bar">Azione richiesta</span>', unsafe_allow_html=True)
         section("Da rendere oggi")
-        st.caption(
-            f"Fatturati tra {soglia_fs.strftime('%d/%m/%Y')} e {soglia_fe.strftime('%d/%m/%Y')} "
-            f"· vendite ultime 30 gg < {rot_min_ui} · giacenza > 0"
+        st.markdown(
+            f'<div style="color: #5C5852; font-size: 13px; margin: -15px 0 15px 0;">'
+            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong> '
+            f'· vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> · giacenza &gt; 0'
+            f'</div>',
+            unsafe_allow_html=True
         )
         if df_rendere.empty:
             empty_state("✓", "Nessun titolo da rendere",
@@ -1116,9 +1148,12 @@ if strumento == "Analisi resi":
 
         # ── Da tenere ────────────────────────────────────────────────────────
         section("Da tenere — in rotazione")
-        st.caption(
-            f"Fatturati tra {soglia_fs.strftime('%d/%m/%Y')} e {soglia_fe.strftime('%d/%m/%Y')} "
-            f"· vendite ultime 30 gg ≥ {rot_min_ui}"
+        st.markdown(
+            f'<div style="color: #5C5852; font-size: 13px; margin: -15px 0 15px 0;">'
+            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong> '
+            f'· vendite ultime 30 gg ≥ <strong>{rot_min_ui}</strong>'
+            f'</div>',
+            unsafe_allow_html=True
         )
         if df_tenere.empty:
             empty_state("—", "Nessun titolo in rotazione attiva", "")
@@ -1135,7 +1170,12 @@ if strumento == "Analisi resi":
 
         # ── Invenduto scaduto ─────────────────────────────────────────────
         section("Invenduto scaduto")
-        st.caption(f"Fatturati prima del {soglia_inv.strftime('%d/%m/%Y')} · fuori dalla finestra di resa")
+        st.markdown(
+            f'<div style="color: #5C5852; font-size: 13px; margin: -15px 0 15px 0;">'
+            f'Fatturati prima del <strong>{soglia_inv.strftime("%d/%m/%Y")}</strong> · fuori dalla finestra di resa'
+            f'</div>',
+            unsafe_allow_html=True
+        )
         if df_scaduto.empty:
             empty_state("✓", "Nessun invenduto scaduto",
                         "Tutti i titoli rientrano nelle finestre temporali attive.")
@@ -1895,11 +1935,14 @@ elif strumento == "Analisi storica":
     else:
         # ── Assegnazione etichette periodo ────────────────────────────────────
         section("Configura i periodi")
-        st.caption(
-            "I file sono ordinati **alfabeticamente per nome** — "
-            "usa nomi come `gen2024.csv`, `apr2024.csv`, `lug2024.csv` "
-            "per preservare l'ordine cronologico senza intervento manuale. "
-            "Modifica le etichette se vuoi nomi più leggibili."
+        st.markdown(
+            '<div style="color: #5C5852; font-size: 13px; line-height: 1.5; margin: -15px 0 15px 0;">'
+            'I file sono ordinati <strong>alfabeticamente per nome</strong> — '
+            'usa nomi come <code>gen2024.csv</code>, <code>apr2024.csv</code>, <code>lug2024.csv</code> '
+            'per preservare l\'ordine cronologico senza intervento manuale. '
+            'Modifica le etichette se vuoi nomi più leggibili.'
+            '</div>',
+            unsafe_allow_html=True
         )
         n_files   = len(files_storico)
         cols_lab  = st.columns(min(n_files, 4))
@@ -1921,25 +1964,26 @@ elif strumento == "Analisi storica":
         snapshots   = []   # [(label, df), ...]
         load_errors = []
 
-        for i, f in enumerate(files_storico):
-            raw = f.read()
-            try:
-                df_s = load_csv(raw)
-                df_s = normalize_columns(df_s)
-                missing = SCHEMA_MAGAZZINO - set(df_s.columns)
-                if missing:
-                    load_errors.append(
-                        f"**{f.name}** — colonne mancanti: "
-                        f"`{'`, `'.join(sorted(missing))}`"
-                    )
-                    continue
-                for col in ["Giacenza", "Vendute_Ultimi_30_Giorni",
-                            "Prezzo_Copertina", "Sconto_Libreria"]:
-                    df_s[col] = parse_numeric(df_s[col])
-                df_s = df_s[df_s["Giacenza"] >= 0].copy()
-                snapshots.append((file_labels[i], df_s))
-            except Exception as exc:
-                load_errors.append(f"**{f.name}** — errore di caricamento: {exc}")
+        with st.spinner(f"📂 Caricamento e validazione {len(files_storico)} snapshot…"):
+            for i, f in enumerate(files_storico):
+                raw = f.read()
+                try:
+                    df_s = load_csv(raw)
+                    df_s = normalize_columns(df_s)
+                    missing = SCHEMA_MAGAZZINO - set(df_s.columns)
+                    if missing:
+                        load_errors.append(
+                            f"**{f.name}** — colonne mancanti: "
+                            f"`{'`, `'.join(sorted(missing))}`"
+                        )
+                        continue
+                    for col in ["Giacenza", "Vendute_Ultimi_30_Giorni",
+                                "Prezzo_Copertina", "Sconto_Libreria"]:
+                        df_s[col] = parse_numeric(df_s[col])
+                    df_s = df_s[df_s["Giacenza"] >= 0].copy()
+                    snapshots.append((file_labels[i], df_s))
+                except Exception as exc:
+                    load_errors.append(f"**{f.name}** — errore di caricamento: {exc}")
 
         for err in load_errors:
             st.error(err)
@@ -2136,10 +2180,13 @@ elif strumento == "Analisi storica":
                 # ── Grafico 1: Andamento valore magazzino ─────────────────────
                 st.divider()
                 section("Andamento del valore magazzino")
-                st.caption(
-                    "Valore a costo (prezzo copertina − sconto) dei libri in giacenza. "
-                    "**Crescita** → accumulo invenduto. "
-                    "**Riduzione** → rese o vendite efficaci."
+                st.markdown(
+                    '<div style="color: #5C5852; font-size: 13px; line-height: 1.5; margin: -15px 0 15px 0;">'
+                    'Valore a costo (prezzo copertina − sconto) dei libri in giacenza. '
+                    '<strong>Crescita</strong> → accumulo invenduto. '
+                    '<strong>Riduzione</strong> → rese o vendite efficaci.'
+                    '</div>',
+                    unsafe_allow_html=True
                 )
                 try:
                     # Validazione dati
