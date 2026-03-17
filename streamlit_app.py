@@ -277,7 +277,6 @@ if "inventario_usato" not in st.session_state:
 
 # Preferenze persistenti (salvate su file)
 PERSISTENT_PREFS = {
-    "dark_mode",
     "calc_prezzo",
     "calc_sconto",
     "calc_resa_pct",
@@ -294,7 +293,6 @@ defaults = {
     "df_mag":           None,
     "df_mag_name":      None,
     "storico_up":       [],
-    "dark_mode":        False,  # Dark mode toggle
     # Calcolatore — valori persistono tra navigazioni
     "calc_titolo":      "",
     "calc_prezzo":      18.00,
@@ -412,28 +410,16 @@ _TONE = {
 }
 
 def get_theme_colors():
-    """Return theme-aware colors based on dark_mode session state."""
-    dark_mode = st.session_state.get("dark_mode", False)
-    if dark_mode:
-        return {
-            "text": "#F5F1EC",
-            "text_secondary": "#D4CCC4",
-            "text_muted": "#9B9590",
-            "bg": "#1A1918",
-            "bg_card": "#2D2B28",
-            "border": "#3A3835",
-            "accent": "#E74C3C",
-        }
-    else:
-        return {
-            "text": "#16130F",
-            "text_secondary": "#5C5852",
-            "text_muted": "#9B9590",
-            "bg": "#F5F1EC",
-            "bg_card": "#FFFFFF",
-            "border": "#E7E3DC",
-            "accent": "#B5362C",
-        }
+    """Return theme colors (light mode)."""
+    return {
+        "text": "#16130F",
+        "text_secondary": "#5C5852",
+        "text_muted": "#9B9590",
+        "bg": "#F5F1EC",
+        "bg_card": "#FFFFFF",
+        "border": "#E7E3DC",
+        "accent": "#B5362C",
+    }
 
 
 def show_toast(message: str, toast_type: str = "info", duration: int = 4000) -> None:
@@ -675,21 +661,6 @@ st.markdown("""
     --t:          .16s ease;
 }
 
-/* Dark Mode */
-[data-theme="dark"] {
-    --bg:         #1A1918;
-    --bg-card:    #2D2B28;
-    --bg-sidebar: #121110;
-    --border:     #3A3835;
-    --text:       #F5F1EC;
-    --text-2:     #D4CCC4;
-    --text-muted: #9B9590;
-    --accent:     #E74C3C;
-    --accent-2:   #FF6B5B;
-    --accent-bg:  rgba(231,76,60,.15);
-    --shadow-sm:  0 1px 3px rgba(0,0,0,.4);
-    --shadow-md:  0 4px 16px rgba(0,0,0,.5), 0 1px 4px rgba(0,0,0,.3);
-}
 
 /* ── BASE ───────────────────────────────────────────────── */
 html, body, .main, [data-testid="stAppViewContainer"] {
@@ -715,9 +686,6 @@ section[data-testid="stSidebar"] > div {
     transition: background-color var(--t), border-color var(--t) !important;
 }
 
-[data-theme="dark"] section[data-testid="stSidebar"] > div {
-    border-right-color: #3A3835 !important;
-}
 
 /* Nasconde il pulsante collapse/expand — sidebar sempre visibile */
 button[data-testid="collapsedControl"],
@@ -740,16 +708,6 @@ section[data-testid="stSidebar"] .stMarkdown p {
     transition: color var(--t) !important;
 }
 
-[data-theme="dark"] section[data-testid="stSidebar"],
-[data-theme="dark"] section[data-testid="stSidebar"] p,
-[data-theme="dark"] section[data-testid="stSidebar"] span,
-[data-theme="dark"] section[data-testid="stSidebar"] div,
-[data-theme="dark"] section[data-testid="stSidebar"] label,
-[data-theme="dark"] section[data-testid="stSidebar"] small,
-[data-theme="dark"] section[data-testid="stSidebar"] .stMarkdown,
-[data-theme="dark"] section[data-testid="stSidebar"] .stMarkdown p {
-    color: #9B9590 !important;
-}
 
 .sb-brand {
     display: flex; align-items: center; gap: .7rem;
@@ -803,10 +761,6 @@ section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
     transition: border-color var(--t), background-color var(--t) !important;
 }
 
-[data-theme="dark"] section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
-    border-color: #3A3835 !important;
-    background: #252420 !important;
-}
 .sb-version {
     font-size: .67rem; color: #5A5856 !important;
     padding: .4rem .1rem .1rem .1rem;
@@ -814,9 +768,6 @@ section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
     transition: color var(--t) !important;
 }
 
-[data-theme="dark"] .sb-version {
-    color: #6A6764 !important;
-}
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
     background: rgba(181,54,44,.14) !important;
@@ -825,10 +776,6 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
     transition: background-color var(--t), color var(--t) !important;
 }
 
-[data-theme="dark"] section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
-    background: rgba(231,76,60,.2) !important;
-    color: #FF9B85 !important;
-}
 .market-label {
     font-size: .75rem; color: var(--text-muted);
     text-transform: uppercase; letter-spacing: .08em;
@@ -1113,140 +1060,11 @@ button[data-testid="collapsedControl"],
     border-left: 4px solid #0284C7;
 }
 
-[data-theme="dark"] .toast.success {
-    background: #064E3B;
-    color: #DCFCE7;
-    border-left-color: #10B981;
-}
-
-[data-theme="dark"] .toast.warning {
-    background: #78350F;
-    color: #FEF3C7;
-    border-left-color: #F59E0B;
-}
-
-[data-theme="dark"] .toast.error {
-    background: #7F1D1D;
-    color: #FECACA;
-    border-left-color: #EF4444;
-}
-
-[data-theme="dark"] .toast.info {
-    background: #0C2D48;
-    color: #BAE6FD;
-    border-left-color: #0284C7;
-}
 
 .toast-icon { font-size: 18px; flex-shrink: 0; }
 .toast-text { flex: 1; }
 .toast.removing { animation: slideOutRight .3s ease forwards; }
 
-/* ── DARK MODE OVERRIDES ────────────────────────────────── */
-[data-theme="dark"] {
-    color-scheme: dark;
-}
-
-/* Testo principale — TUTTO il contenuto diventa chiaro */
-[data-theme="dark"] .main,
-[data-theme="dark"] .main p,
-[data-theme="dark"] .main span,
-[data-theme="dark"] .main div,
-[data-theme="dark"] .main label,
-[data-theme="dark"] .main h1,
-[data-theme="dark"] .main h2,
-[data-theme="dark"] .main h3,
-[data-theme="dark"] .main h4,
-[data-theme="dark"] .main li,
-[data-theme="dark"] .main strong,
-[data-theme="dark"] .main .stMarkdown,
-[data-theme="dark"] .main .stMarkdown p,
-[data-theme="dark"] [data-testid="stAppViewContainer"] {
-    color: var(--text) !important;
-}
-
-/* Sottotitoli e testo secondario */
-[data-theme="dark"] .main .stMarkdown small,
-[data-theme="dark"] .main .stCaption,
-[data-theme="dark"] .section-title::after {
-    color: var(--text-2) !important;
-}
-
-/* Metric cards e containers */
-[data-theme="dark"] [data-testid="stMetric"],
-[data-theme="dark"] [data-testid="stMetric"] label,
-[data-theme="dark"] [data-testid="stMetric"] [data-testid="stMetricValue"],
-[data-theme="dark"] [data-testid="stMetric"] [data-testid="stMetricDelta"] {
-    color: var(--text) !important;
-}
-
-/* Selectbox, input, number_input */
-[data-theme="dark"] [data-testid="stSelectbox"] label,
-[data-theme="dark"] [data-testid="stNumberInput"] label,
-[data-theme="dark"] [data-testid="stTextInput"] label,
-[data-theme="dark"] [data-testid="stMultiSelect"] label {
-    color: var(--text) !important;
-}
-
-[data-theme="dark"] [data-baseweb="select"],
-[data-theme="dark"] [data-baseweb="input"] {
-    background-color: var(--bg-card) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-/* Bottoni */
-[data-theme="dark"] .stButton button {
-    color: var(--text) !important;
-    border-color: var(--border) !important;
-    background-color: var(--bg-card) !important;
-}
-[data-theme="dark"] .stButton button:hover {
-    background-color: var(--border) !important;
-}
-
-/* Divider */
-[data-theme="dark"] hr {
-    border-color: var(--border) !important;
-}
-
-/* Tabs */
-[data-theme="dark"] [data-testid="stTabs"] button {
-    color: var(--text-2) !important;
-}
-[data-theme="dark"] [data-testid="stTabs"] button[aria-selected="true"] {
-    color: var(--text) !important;
-}
-
-/* Alert boxes */
-[data-theme="dark"] [data-testid="stAlert"] {
-    background-color: rgba(100, 100, 100, 0.15) !important;
-    border-color: var(--border) !important;
-    color: var(--text) !important;
-}
-
-/* DataFrames */
-[data-theme="dark"] [data-testid="stDataFrame"] {
-    background-color: var(--bg-card) !important;
-}
-[data-theme="dark"] [data-testid="stDataFrame"] tbody {
-    background-color: var(--bg) !important;
-}
-
-/* Expander */
-[data-theme="dark"] [data-testid="stExpander"] {
-    border-color: var(--border) !important;
-    background-color: var(--bg-card) !important;
-}
-[data-theme="dark"] [data-testid="stExpander"] summary,
-[data-theme="dark"] [data-testid="stExpander"] summary span {
-    color: var(--text) !important;
-}
-
-/* Page header custom classes */
-[data-theme="dark"] .page-header h1,
-[data-theme="dark"] .section-title {
-    color: var(--text) !important;
-}
 
 /* ── SCROLLBAR ──────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -1256,41 +1074,6 @@ button[data-testid="collapsedControl"],
 </style>
 """, unsafe_allow_html=True)
 
-# Apply dark mode theme based on session_state
-dark_mode_enabled = st.session_state.get("dark_mode", False)
-theme_attr = 'data-theme="dark"' if dark_mode_enabled else ''
-
-# Usa components.html per eseguire JavaScript (st.markdown NON esegue <script>)
-import streamlit.components.v1 as components
-_theme_js = f"""
-<script>
-// Imposta il tema sul documento parent (Streamlit main frame)
-const doc = window.parent.document;
-doc.documentElement.setAttribute("data-theme", "{'dark' if dark_mode_enabled else 'light'}");
-
-// Toast notification system sul parent
-window.parent.showToast = function(message, type, duration) {{
-    type = type || 'info';
-    duration = duration || 4000;
-    let container = doc.querySelector('.toast-container');
-    if (!container) {{
-        container = doc.createElement('div');
-        container.className = 'toast-container';
-        doc.body.appendChild(container);
-    }}
-    const icons = {{'success': '✓', 'error': '✕', 'warning': '⚠', 'info': 'ℹ'}};
-    const toast = doc.createElement('div');
-    toast.className = 'toast ' + type;
-    toast.innerHTML = '<div class="toast-icon">' + (icons[type] || 'ℹ') + '</div><div class="toast-text">' + message + '</div>';
-    container.appendChild(toast);
-    setTimeout(function() {{
-        toast.classList.add('removing');
-        setTimeout(function() {{ toast.remove(); }}, 300);
-    }}, duration);
-}};
-</script>
-"""
-components.html(_theme_js, height=0)
 
 # ---------------------------------------------------------------------------
 # ECONOMIST CHART STYLE — usato in Analisi storica e Simulatore ordine
@@ -1298,26 +1081,13 @@ components.html(_theme_js, height=0)
 def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src="", show_png=True):
     """Applica lo stile Economist a un oggetto Plotly Figure con animazioni e interattività premium."""
     try:
-        # Dark mode support
-        dark_mode = st.session_state.get("dark_mode", False)
-        if dark_mode:
-            # Dark mode colors
-            bg_color = "#2D2B28"
-            text_color = "#F5F1EC"
-            text_secondary = "#D4CCC4"
-            grid_color = "#3A3835"
-            border_color = "#4A4844"
-            hover_bg = "#3A3835"
-            hover_text = "#F5F1EC"
-        else:
-            # Light mode colors
-            bg_color = "white"
-            text_color = "#16130F"
-            text_secondary = "#5C5852"
-            grid_color = "#F0EBE5"
-            border_color = "#D5D0CB"
-            hover_bg = "#16130F"
-            hover_text = "#F5F1EC"
+        bg_color = "white"
+        text_color = "#16130F"
+        text_secondary = "#5C5852"
+        grid_color = "#F0EBE5"
+        border_color = "#D5D0CB"
+        hover_bg = "#16130F"
+        hover_text = "#F5F1EC"
 
         title_html = (f"<b>{title}</b>" if title else "") + (
             f"<br><span style='font-size:12px;color:{text_secondary};font-weight:400;letter-spacing:0.3px'>{subtitle}</span>"
@@ -1380,7 +1150,7 @@ def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src="
 
         # Annotazione fonte con migliore formattazione
         if src:
-            src_color = "#9B9590" if not dark_mode else "#9B9590"
+            src_color = "#9B9590"
             fig.add_annotation(
                 text=f"<i>Fonte: {src}</i>", xref="paper", yref="paper",
                 x=0, y=-0.22, showarrow=False,
@@ -1499,16 +1269,7 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
 
-    # Dark mode — solo icona
-    _is_dark = st.session_state.get("dark_mode", False)
-    _icon = "☀️" if _is_dark else "🌙"
-    if st.button(_icon, key="dark_toggle_btn"):
-        st.session_state["dark_mode"] = not _is_dark
-        st.rerun()
-
-    st.divider()
-
-    # Navigazione con selectbox - alternativa ai bottoni
+    # Navigazione con selectbox
     nav_labels = {
         "Dashboard":                  "📊 Dashboard",
         "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
