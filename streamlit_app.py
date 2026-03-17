@@ -935,11 +935,11 @@ with st.sidebar:
     scelta = st.radio(
         label="nav", options=PAGINE, index=idx, label_visibility="hidden",
         format_func=lambda x: {
-            "Analisi resi":               f"📦 Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
-            "Calcolatore margine ordine": "🧮 Calcolatore margine",
-            "Gestione usato":             f"📚 Gestione usato{'  ' + str(n_usato) if n_usato > 0 else ''}",
-            "Analisi storica":            f"📈 Analisi storica{'  ✓' if storico_ok else ''}",
-            "Simulatore ordine":          f"🔢 Simulatore ordine{'  ✓' if sim_ok else ''}",
+            "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
+            "Calcolatore margine ordine": "Calcolatore margine",
+            "Gestione usato":             f"Gestione usato{'  ' + str(n_usato) if n_usato > 0 else ''}",
+            "Analisi storica":            f"Analisi storica{'  ✓' if storico_ok else ''}",
+            "Simulatore ordine":          f"Simulatore ordine{'  ✓' if sim_ok else ''}",
         }[x]
     )
     st.session_state["pagina"] = scelta
@@ -948,7 +948,20 @@ with st.sidebar:
     if scelta == "Analisi resi":
         st.divider()
         st.caption("File di lavoro · ✓ = caricato")
-        mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="visible")
+        _col1, _col2 = st.columns(2)
+        with _col1:
+            mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="visible")
+        with _col2:
+            if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
+                try:
+                    demo_df = pd.read_csv(pathlib.Path(__file__).parent / "storico_apr2024.csv")
+                    demo_df = normalize_columns(demo_df)
+                    if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
+                        st.session_state["df_mag"] = demo_df
+                        st.session_state["df_mag_name"] = "storico_apr2024.csv [DEMO]"
+                        st.success("Demo caricata!")
+                except Exception as e:
+                    st.error(f"Errore caricamento demo: {e}")
     elif scelta == "Analisi storica":
         st.divider()
         st.caption("Carica 2+ snapshot CSV · stesso formato del gestionale · ordine cronologico")
@@ -1342,8 +1355,8 @@ if strumento == "Analisi resi":
                 )
 
     else:
-        empty_state("📦", "Nessun file caricato",
-                    "Carica il gestionale magazzino dalla barra laterale.")
+        empty_state("", "Pronto per analizzare il magazzino",
+                    "Carica un file CSV dalla barra laterale oppure clicca 'Carica demo' per provare con dati di esempio.")
         st.divider()
         section("CSV di esempio")
         _w = lambda n: (DATA_SISTEMA - timedelta(days=n)).strftime("%d/%m/%Y")
