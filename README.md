@@ -32,7 +32,7 @@ I CSV devono contenere queste colonne:
 - **Prezzo_Copertina** - Prezzo di listino (€)
 - **Sconto_Libreria** - Sconto editore applicato (€)
 
-## 🔧 Installazione
+## Installazione
 
 ```bash
 pip install -r requirements.txt
