@@ -31,7 +31,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # CONFIGURAZIONE
 # ---------------------------------------------------------------------------
-st.set_page_config(page_title="BookStore OS", page_icon="📚", layout="wide", initial_sidebar_state="auto")
+st.set_page_config(page_title="BookStore OS", page_icon="📚", layout="wide", initial_sidebar_state="expanded")
 
 DATA_SISTEMA          = date.today()
 SOGLIA_INVENDUTO      = DATA_SISTEMA - timedelta(days=182)
@@ -669,35 +669,6 @@ def processa_magazzino(df_raw: pd.DataFrame, soglia_invenduto, finestra_start, f
 # CSS
 # ---------------------------------------------------------------------------
 st.markdown("""
-<script>
-(function() {
-    function purgeIconTooltips(root) {
-        (root || document).querySelectorAll('[title],[aria-label]').forEach(function(el) {
-            if ((el.title || '').indexOf('keyboard_') !== -1) el.removeAttribute('title');
-            if ((el.getAttribute('aria-label') || '').indexOf('keyboard_') !== -1) el.removeAttribute('aria-label');
-        });
-    }
-    purgeIconTooltips();
-    /* MutationObserver: intercetta ogni re-render di Streamlit */
-    new MutationObserver(function(mutations) {
-        mutations.forEach(function(m) {
-            m.addedNodes.forEach(function(n) {
-                if (n.nodeType === 1) purgeIconTooltips(n);
-            });
-        });
-    }).observe(document.body, { childList: true, subtree: true });
-    /* mouseover: rimuove title prima che il browser mostri il tooltip */
-    document.addEventListener('mouseover', function(e) {
-        var el = e.target;
-        while (el && el !== document.body) {
-            if ((el.title || '').indexOf('keyboard_') !== -1) el.removeAttribute('title');
-            el = el.parentElement;
-        }
-    }, true);
-})();
-</script>
-""", unsafe_allow_html=True)
-st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
 
@@ -1045,15 +1016,9 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 /* Radio in main content */
 [data-testid="stRadio"] label { font-size: .85rem !important; }
 
-/* Sidebar collapse button: testo grezzo icona reso invisibile, sostituito con Unicode */
-[data-testid="stSidebarHeader"] { color: transparent !important; }
-[data-testid="stSidebarHeader"] button::before {
-    content: '‹';
-    color: #8A8784;
-    font-size: 1.4rem;
-    font-family: sans-serif;
-    line-height: 1;
-}
+/* Nasconde i pulsanti collapse/expand — sidebar sempre visibile */
+[data-testid="stSidebarHeader"],
+button[data-testid="collapsedControl"] { display: none !important; }
 
 
 /* ── ANIMATIONS ─────────────────────────────────────────── */
