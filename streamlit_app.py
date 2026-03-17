@@ -1017,12 +1017,11 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 /* Radio in main content */
 [data-testid="stRadio"] label { font-size: .85rem !important; }
 
-/* Sidebar collapse button: sostituisce icona Material (font non carica su Cloud) con Unicode */
-[data-testid="stSidebarHeader"] .material-symbols-outlined {
-    font-size: 0 !important;
-}
-[data-testid="stSidebarHeader"] .material-symbols-outlined::before {
+/* Sidebar collapse button: testo grezzo icona reso invisibile, sostituito con Unicode */
+[data-testid="stSidebarHeader"] { color: transparent !important; }
+[data-testid="stSidebarHeader"] button::before {
     content: '‹';
+    color: #8A8784;
     font-size: 1.4rem;
     font-family: sans-serif;
     line-height: 1;
