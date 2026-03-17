@@ -3287,7 +3287,7 @@ elif strumento == "Analisi storica":
                                     x=row["Periodo"], y=row["Valore_Mag"],
                                     text=f"<b>{fmt_euro(row['Valore_Mag'])}</b>",
                                     yshift=22, showarrow=True,
-                                    arrowhead=0, arrowsize=0, arrowwidth=0, arrowcolor="transparent",
+                                    arrowhead=0, arrowsize=0, arrowwidth=0, arrowcolor="rgba(0,0,0,0)",
                                     font=dict(size=10, color="#16130F", family="Inter"),
                                     xanchor="center", yanchor="bottom",
                                     bgcolor="rgba(255,255,255,0.8)", borderpad=4,
