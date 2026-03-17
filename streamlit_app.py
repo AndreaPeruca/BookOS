@@ -1560,7 +1560,7 @@ with tab_dash:
 
         # Bottone carica nuovo
         if st.button("📥 Carica nuovo file", use_container_width=True, key="dashboard_load_btn"):
-            st.info("👈 Usa il file uploader nella barra laterale")
+            st.info("⬆️ Usa il banner in cima alla pagina per caricare il gestionale")
 
         # Alert se qualità è bassa
         if file_stats["quality"] < 70 and file_stats["missing_cols"]:
@@ -1580,7 +1580,7 @@ with tab_dash:
         <div class="onb-steps">
             <div class="onb-step">
                 <div class="onb-step-num">1</div>
-                <div class="onb-step-text"><strong>Carica il tuo gestionale</strong><br>Usa il file uploader nella barra laterale — è il CSV che esporti dal tuo software di magazzino.</div>
+                <div class="onb-step-text"><strong>Carica il tuo gestionale</strong><br>Usa il banner in cima alla pagina — è il CSV che esporti dal tuo software di magazzino.</div>
             </div>
             <div class="onb-step">
                 <div class="onb-step-num">2</div>
@@ -1613,8 +1613,7 @@ with tab_dash:
 # ===========================================================================
 with tab_radar:
     page_header("Radar Salva-Cassa", f"Data di sistema: {DATA_SISTEMA.strftime('%d/%m/%Y')}.")
-    st.markdown(
-        "📋 **Carica il gestionale magazzino dalla barra laterale**\n\n"
+    st.caption(
         "Colonne richieste: `Titolo` · `Autore` · `Editore` · `ISBN` · "
         "`Data_Fatturazione` (gg/mm/aaaa) · `Giacenza` · "
         "`Vendute_Ultimi_30_Giorni` · `Prezzo_Copertina` · `Sconto_Libreria`"
@@ -2162,7 +2161,7 @@ with tab_radar:
 
     else:
         empty_state("", "Pronto per analizzare il magazzino",
-                    "Carica un file CSV dalla barra laterale oppure clicca 'Carica demo' per provare con dati di esempio.")
+                    "Carica il gestionale usando il banner in cima alla pagina oppure premi Demo per usare dati di esempio.")
         st.divider()
         section("CSV di esempio")
         _w = lambda n: (DATA_SISTEMA - timedelta(days=n)).strftime("%d/%m/%Y")
@@ -2205,7 +2204,7 @@ with tab_scaffale:
     df_mag = st.session_state.get("df_mag")
 
     if df_mag is None:
-        empty_state("📦", "Nessun file caricato", "Carica il tuo gestionale dalla barra laterale per analizzare i costi di scaffale.")
+        empty_state("📦", "Nessun file caricato", "Carica il tuo gestionale usando il banner in cima alla pagina per analizzare i costi di scaffale.")
     else:
         # ── Parametri negozio ──────────────────────────────────────────
         with st.expander("⚙️ Parametri negozio", expanded=True):
@@ -2942,7 +2941,7 @@ with tab_storico:
     if not files_storico:
         empty_state(
             "📈", "Nessuno snapshot caricato",
-            "Carica 2 o più file CSV dalla barra laterale — stesso formato del gestionale. "
+            "Carica 2 o più file CSV qui sotto — stesso formato del gestionale. "
             "Ogni file è una fotografia dello stock in un momento diverso.",
         )
         st.divider()
