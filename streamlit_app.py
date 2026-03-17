@@ -3285,7 +3285,7 @@ elif strumento == "Analisi storica":
                             max_val = df_agg["Valore_Mag"].max()
                             fig_val.update_yaxes(
                                 tickprefix="€ ", tickformat=",.0f",
-                                range=[0, max_val * 1.35] if max_val > 0 else [0, 1000],
+                                range=[0, max_val * 1.55] if max_val > 0 else [0, 1000],
                             )
                             fig_val.update_layout(height=420)
                             st.plotly_chart(fig_val, use_container_width=True,
