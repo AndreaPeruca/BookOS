@@ -709,9 +709,7 @@ html, body, .main, [data-testid="stAppViewContainer"] {
 
 /* ── SIDEBAR ────────────────────────────────────────────── */
 section[data-testid="stSidebar"] {
-    transform: none !important;
-    min-width: 18rem !important;
-    display: flex !important;
+    min-width: 18rem;
 }
 section[data-testid="stSidebar"] > div {
     background-color: var(--bg-sidebar) !important;
@@ -1019,8 +1017,7 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 [data-testid="stRadio"] label { font-size: .85rem !important; }
 
 /* Sidebar toggle — sempre visibile */
-button[data-testid="collapsedControl"],
-[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
+button[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
 
 /* ── ANIMATIONS ─────────────────────────────────────────── */
 @keyframes fadeUp {
@@ -1121,12 +1118,11 @@ button[data-testid="collapsedControl"],
         padding-top: 1rem !important;
     }
 
-    /* Sidebar: ripristina il pulsante collapse e lascia che si chiuda */
+    /* Sidebar: lascia che si chiuda su mobile */
     section[data-testid="stSidebar"] {
         min-width: unset !important;
     }
-    button[data-testid="collapsedControl"],
-    [data-testid="collapsedControl"] {
+    button[data-testid="collapsedControl"] {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
