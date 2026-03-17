@@ -3387,7 +3387,6 @@ elif strumento == "Analisi storica":
 
                 # ── Grafico 3: Titoli cronicamente fermi ──────────────────────
                 st.divider()
-                section("Titoli a rischio cronico")
                 st.caption(
                     f"Titoli con sell-through < {BENCHMARK['sell_through_critico']:.0f}%/mese "
                     "in almeno il 50% degli snapshot e presenti in almeno 2 rilevazioni. "
