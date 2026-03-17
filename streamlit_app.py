@@ -1018,9 +1018,7 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 /* Radio in main content */
 [data-testid="stRadio"] label { font-size: .85rem !important; }
 
-/* Misc hide — i pulsanti di collapse/expand sidebar NON vanno nascosti */
-button[kind="headerNoPadding"] { display: none !important; }
-/* Forza visibilità del bottone per riaprire la sidebar collassata */
+/* Sidebar toggle — sempre visibile */
 button[data-testid="collapsedControl"],
 [data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
 
