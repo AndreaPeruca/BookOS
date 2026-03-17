@@ -1001,11 +1001,11 @@ with st.sidebar:
 # ===========================================================================
 if strumento == "Analisi resi":
     page_header("Radar Salva-Cassa", f"Data di sistema: {DATA_SISTEMA.strftime('%d/%m/%Y')}.")
-    st.caption(
-        "Carica il gestionale magazzino dalla barra laterale · "
-        "Colonne richieste: Titolo · Autore · Editore · ISBN · "
-        "Data_Fatturazione (gg/mm/aaaa) · Giacenza · "
-        "Vendute_Ultimi_30_Giorni · Prezzo_Copertina · Sconto_Libreria"
+    st.markdown(
+        "📋 **Carica il gestionale magazzino dalla barra laterale**\n\n"
+        "Colonne richieste: `Titolo` · `Autore` · `Editore` · `ISBN` · "
+        "`Data_Fatturazione` (gg/mm/aaaa) · `Giacenza` · "
+        "`Vendute_Ultimi_30_Giorni` · `Prezzo_Copertina` · `Sconto_Libreria`"
     )
     df_mag = st.session_state.get("df_mag")
 
