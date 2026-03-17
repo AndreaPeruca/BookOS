@@ -3432,7 +3432,7 @@ elif strumento == "Analisi storica":
                             fig_fermi.update_xaxes(tickprefix="€ ", tickformat=",.0f")
                             fig_fermi.update_layout(
                                 height=max(380, 42 * len(tit_d) + 150),
-                                margin=dict(l=12, r=140, t=88, b=80),
+                                margin=dict(l=12, r=140, t=120, b=80),
                                 hovermode="y",
                             )
                             st.plotly_chart(fig_fermi, use_container_width=True,
