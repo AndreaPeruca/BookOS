@@ -872,6 +872,7 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked
 .mc-value {
     font-family: var(--font-serif);
     font-size: 1.8rem; font-weight: 700; line-height: 1.05;
+    white-space: nowrap;
 }
 .mc-note { font-size: .71rem; color: var(--text-muted); margin-top: .3rem; line-height: 1.45; }
 
