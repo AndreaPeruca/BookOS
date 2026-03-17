@@ -1192,6 +1192,28 @@ button[data-testid="collapsedControl"] { display: none !important; }
     .market-links { gap: .4rem; }
     .market-links a { font-size: .7rem; padding: 2px 8px; }
 }
+
+/* ── TABS NAVIGAZIONE ─────────────────────────────────── */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 0;
+    border-bottom: 2px solid var(--border);
+    background: transparent;
+}
+.stTabs [data-baseweb="tab"] {
+    padding: .6rem 1.1rem;
+    font-size: .82rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    background: transparent;
+}
+.stTabs [aria-selected="true"] {
+    color: var(--accent) !important;
+    border-bottom-color: var(--accent) !important;
+    font-weight: 600;
+}
+.stTabs [data-baseweb="tab-panel"] { padding-top: 1.5rem; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -1403,72 +1425,24 @@ with st.sidebar:
         </div>
     </div>""", unsafe_allow_html=True)
 
-    # Navigazione con selectbox
-    nav_labels = {
-        "Dashboard":                  "📊 Dashboard",
-        "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
-        "Costo Scaffale":             f"💰 Costo Scaffale{'  ✓' if mag_ok else ''}",
-        "Calcolatore margine ordine": "Calcolatore margine",
-        "Gestione usato":             f"Gestione usato{'  ' + str(n_usato) if n_usato > 0 else ''}",
-        "Analisi storica":            f"Analisi storica{'  ✓' if storico_ok else ''}",
-        "Simulatore ordine":          f"Simulatore ordine{'  ✓' if sim_ok else ''}",
-    }
-
-    # Ottieni la pagina dal session_state, con fallback sicuro
-    pagina_salvata = st.session_state.get("pagina", "Dashboard")
-    if pagina_salvata not in PAGINE:
-        pagina_salvata = "Dashboard"
-    idx_current = PAGINE.index(pagina_salvata)
-
-    # Selectbox SENZA key per evitare conflitti con session_state
-    strumento = st.selectbox(
-        "Vai a:",
-        PAGINE,
-        index=idx_current,
-        format_func=lambda x: nav_labels[x],
-        label_visibility="collapsed"
-    )
-
-    # Sincronizza il session_state con la selectbox e aggiorna l'URL
-    st.session_state["pagina"] = strumento
-    st.query_params["page"] = strumento
-
-    if strumento == "Analisi resi":
-        st.divider()
-        colors = THEME_COLORS
-        st.markdown(f'<span style="color: {colors["text_secondary"]}; font-size: 13px; font-weight: 500;">📋 File di lavoro · ✓ = caricato</span>', unsafe_allow_html=True)
-        st.markdown("📁 **Trascina il file CSV qui oppure clicca per sfogliare**")
-        mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
-        _bcol1, _bcol2 = st.columns(2)
-        with _bcol1:
-            if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
-                try:
-                    demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
-                    demo_df = normalize_columns(demo_df)
-                    if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
-                        st.session_state["df_mag"] = demo_df
-                        st.session_state["df_mag_name"] = "storico_apr2024.csv [DEMO]"
-                        st.success("Demo caricata!")
-                except Exception as e:
-                    st.error(f"Errore caricamento demo: {e}")
-        with _bcol2:
-            pass  # Spazio vuoto per simmetria
-    elif strumento == "Analisi storica":
-        st.divider()
-        st.markdown("📊 **Carica 2+ snapshot CSV** · stesso formato del gestionale · ordine cronologico")
-        st.markdown("📁 **Trascina i file CSV qui oppure clicca per sfogliare**")
-        storico_files_sb = st.file_uploader(
-            "Snapshot storici", type="csv",
-            accept_multiple_files=True, key="storico_up",
-            label_visibility="collapsed",
-        ) or []
-        mag_file_sb = None
-    elif strumento == "Simulatore ordine":
-        st.divider()
-        st.markdown("📈 **Usa il gestionale già caricato come base** · caricalo nel Radar Salva-Cassa")
-        mag_file_sb = None
-    else:
-        mag_file_sb = None
+    st.divider()
+    colors = THEME_COLORS
+    st.markdown(f'<span style="color: {colors["text_secondary"]}; font-size: 13px; font-weight: 500;">📂 Gestionale magazzino</span>', unsafe_allow_html=True)
+    mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
+    _bcol1, _bcol2 = st.columns(2)
+    with _bcol1:
+        if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
+            try:
+                demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
+                demo_df = normalize_columns(demo_df)
+                if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
+                    st.session_state["df_mag"] = demo_df
+                    st.session_state["df_mag_name"] = "storico_apr2024.csv [DEMO]"
+                    st.success("Demo caricata!")
+            except Exception as e:
+                st.error(f"Errore caricamento demo: {e}")
+    with _bcol2:
+        pass  # Spazio vuoto per simmetria
 
     get_or_load("df_mag", mag_file_sb, SCHEMA_MAGAZZINO, "Gestionale magazzino")
     st.divider()
@@ -1479,10 +1453,21 @@ with st.sidebar:
 
     st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
 
+# Navigazione a tab
+(tab_dash, tab_radar, tab_scaffale, tab_calc, tab_usato, tab_storico, tab_sim) = st.tabs([
+    "📊 Dashboard",
+    "🔍 Radar",
+    "💰 Scaffale",
+    "🧮 Margine",
+    "📚 Usato",
+    "📈 Storico",
+    "🎮 Simulatore",
+])
+
 # ===========================================================================
 # DASHBOARD
 # ===========================================================================
-if strumento == "Dashboard":
+with tab_dash:
     page_header("Dashboard", "Panoramica della tua libreria e azioni rapide")
 
     # ── Sezione 1: Stato Magazzino ──────────────────────────────────────────
@@ -1622,7 +1607,7 @@ if strumento == "Dashboard":
 # ===========================================================================
 # ANALISI RESI — Radar Salva-Cassa
 # ===========================================================================
-if strumento == "Analisi resi":
+with tab_radar:
     page_header("Radar Salva-Cassa", f"Data di sistema: {DATA_SISTEMA.strftime('%d/%m/%Y')}.")
     st.markdown(
         "📋 **Carica il gestionale magazzino dalla barra laterale**\n\n"
@@ -2210,7 +2195,7 @@ if strumento == "Analisi resi":
 # ===========================================================================
 # COSTO SCAFFALE — Quanto costa tenere un libro sullo scaffale?
 # ===========================================================================
-elif strumento == "Costo Scaffale":
+with tab_scaffale:
     page_header("Costo Scaffale", "Quanto ti costa tenere un libro sullo scaffale? Confronta il costo di giacenza col margine atteso.")
 
     df_mag = st.session_state.get("df_mag")
@@ -2397,7 +2382,7 @@ elif strumento == "Costo Scaffale":
 # ===========================================================================
 # CALCOLATORE MARGINE ORDINE
 # ===========================================================================
-elif strumento == "Calcolatore margine ordine":
+with tab_calc:
     page_header("Calcolatore margine ordine",
                 "Simula il margine reale prima di fare un ordine. I valori persistono tra una navigazione e l'altra.")
 
@@ -2615,7 +2600,7 @@ elif strumento == "Calcolatore margine ordine":
 # ===========================================================================
 # GESTIONE USATO
 # ===========================================================================
-elif strumento == "Gestione usato":
+with tab_usato:
     page_header("Gestione usato",
                 "Valuta i libri usati in entrata con percentuali modificabili per ogni titolo.")
 
@@ -2867,7 +2852,7 @@ elif strumento == "Gestione usato":
 # ===========================================================================
 # ANALISI STORICA
 # ===========================================================================
-elif strumento == "Analisi storica":
+with tab_storico:
 
     # ── Economist-style layout helper ────────────────────────────────────────
     def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src=""):
@@ -2923,6 +2908,12 @@ elif strumento == "Analisi storica":
         "Analisi storica",
         "Confronta più snapshot del gestionale per leggere l'evoluzione del magazzino nel tempo.",
     )
+
+    storico_files_sb = st.file_uploader(
+        "Snapshot storici", type="csv",
+        accept_multiple_files=True, key="storico_up",
+        label_visibility="collapsed",
+    ) or []
 
     # Mock file per il caricamento demo — compatibile con f.read() e f.name
     class _FakeFile:
@@ -3603,7 +3594,7 @@ Fonte: AIE / ISTAT 2022 (dati pubblici aggregati, mercato librario italiano).
 # ===========================================================================
 # SIMULATORE ORDINE NUOVO TITOLO
 # ===========================================================================
-elif strumento == "Simulatore ordine":
+with tab_sim:
 
     page_header(
         "Simulatore ordine",
