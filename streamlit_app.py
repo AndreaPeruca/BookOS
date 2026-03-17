@@ -31,7 +31,7 @@ except ImportError:
 # ---------------------------------------------------------------------------
 # CONFIGURAZIONE
 # ---------------------------------------------------------------------------
-st.set_page_config(page_title="BookStore OS", page_icon="📚", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="BookStore OS", page_icon="📚", layout="wide", initial_sidebar_state="auto")
 
 DATA_SISTEMA          = date.today()
 SOGLIA_INVENDUTO      = DATA_SISTEMA - timedelta(days=182)
