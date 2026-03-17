@@ -788,6 +788,18 @@ section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
     transition: border-color var(--t), background-color var(--t) !important;
 }
 
+/* ── ONBOARDING ─────────────────────────────────────────── */
+.onb-wrap { max-width: 640px; margin: 2rem auto; padding: 0 1rem; }
+.onb-hero { text-align: center; margin-bottom: 2.5rem; }
+.onb-hero-title { font-family: var(--font-serif); font-size: 2rem; font-weight: 700; color: var(--text); margin-bottom: .6rem; }
+.onb-hero-sub { font-size: .9rem; color: var(--text-secondary); line-height: 1.6; }
+.onb-steps { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+.onb-step { display: flex; align-items: flex-start; gap: 1rem; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.2rem; }
+.onb-step-num { flex-shrink: 0; width: 2rem; height: 2rem; border-radius: 50%; background: var(--accent); color: #fff; font-size: .85rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.onb-step-text { font-size: .88rem; color: var(--text-secondary); line-height: 1.55; }
+.onb-step-text strong { color: var(--text); font-size: .92rem; }
+.onb-divider { text-align: center; color: var(--text-muted); font-size: .8rem; margin: 1rem 0; }
+
 .sb-version {
     font-size: .67rem; color: #5A5856 !important;
     padding: .4rem .1rem .1rem .1rem;
@@ -1546,63 +1558,45 @@ with tab_dash:
         elif file_stats["quality"] < 85:
             st.info(f"💡 Qualità file: {file_stats['rating']}. Controlla i dati mancanti.")
 
-        # ── Sezione 3: Azioni rapide ────────────────────────────────────────
         st.divider()
-        section("⚡ Azioni Rapide")
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.button("🔍 Analizza magazzino", key="dash_radar", use_container_width=True):
-                st.session_state["pagina"] = "Analisi resi"
-                st.rerun()
-        with col2:
-            if st.button("📊 Analisi storica", key="dash_storico", use_container_width=True):
-                st.session_state["pagina"] = "Analisi storica"
-                st.rerun()
-        with col3:
-            if st.button("🧮 Calcolo margine", key="dash_margine", use_container_width=True):
-                st.session_state["pagina"] = "Calcolatore margine ordine"
-                st.rerun()
-
-        st.divider()
-        st.markdown("""
-        <div style="padding: 12px; background: #E8F4F8; border-left: 4px solid #0284C7; border-radius: 4px; color: #0C4A6E;">
-        <strong>💡 Consiglio:</strong> Inizia caricando il tuo gestionale dalla barra laterale,
-        poi usa il Radar Salva-Cassa per identificare i titoli da rendere e i libri a rotazione lenta.
-        </div>
-        """, unsafe_allow_html=True)
+        st.caption("💡 Usa i tab in cima per navigare tra le sezioni — Radar, Scaffale, Margine, Usato, Storico, Simulatore.")
 
     else:
-        st.divider()
-        st.markdown("""
-        <div style="text-align: center; padding: 40px 20px;">
-        <div style="font-size: 48px; margin-bottom: 20px;">📦</div>
-        <h3 style="margin: 0 0 10px 0;">Nessun file caricato</h3>
-        <p style="color: #666; margin-bottom: 30px;">Carica il tuo gestionale per iniziare l'analisi del magazzino</p>
+        st.markdown("""<div class="onb-wrap">
+        <div class="onb-hero">
+            <div class="onb-hero-title">Benvenuto in BookStore OS</div>
+            <div class="onb-hero-sub">Il toolkit per librai indipendenti. Analizza il magazzino, identifica i libri fermi, calcola i margini d'ordine e molto altro.</div>
         </div>
-        """, unsafe_allow_html=True)
+        <div class="onb-steps">
+            <div class="onb-step">
+                <div class="onb-step-num">1</div>
+                <div class="onb-step-text"><strong>Carica il tuo gestionale</strong><br>Usa il file uploader nella barra laterale — è il CSV che esporti dal tuo software di magazzino.</div>
+            </div>
+            <div class="onb-step">
+                <div class="onb-step-num">2</div>
+                <div class="onb-step-text"><strong>Vai al tab Radar</strong><br>Scopri quali libri rendere all'editore, quali tenere e quali stanno performando bene.</div>
+            </div>
+            <div class="onb-step">
+                <div class="onb-step-num">3</div>
+                <div class="onb-step-text"><strong>Esplora le altre sezioni</strong><br>Calcola il costo scaffale, simula ordini futuri, analizza l'andamento nel tempo con più snapshot.</div>
+            </div>
+        </div>
+        <div class="onb-divider">— oppure —</div>
+        </div>""", unsafe_allow_html=True)
 
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("**📥 Opzione 1: Carica il tuo file**")
-            st.markdown("Usa il **file uploader nella barra laterale** (sinistra) per caricare il CSV del tuo gestionale")
-
-        with col2:
-            st.markdown("**🎯 Opzione 2: Prova con dati demo**")
-            if st.button("📊 Carica dati di esempio", use_container_width=True, key="demo_btn_dash"):
+        _, col_demo, _ = st.columns([1, 2, 1])
+        with col_demo:
+            if st.button("📊 Prova con i dati demo", use_container_width=True, key="demo_btn_dash"):
                 try:
                     demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
                     demo_df = normalize_columns(demo_df)
                     if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
                         st.session_state["df_mag"] = demo_df
                         st.session_state["df_mag_name"] = "storico_apr2024.csv [DEMO]"
-                        show_toast("Demo caricata! Prova il Radar Salva-Cassa", "success", 3000)
-                        st.success("✓ File demo caricato con successo!")
+                        show_toast("Demo caricata! Vai al tab Radar per iniziare.", "success", 4000)
                         st.rerun()
                 except Exception as e:
                     st.error(f"Errore nel caricamento demo: {e}")
-
-        st.divider()
-        st.info("💡 **Consiglio:** Se non hai ancora un file CSV, prova i dati demo per scoprire tutte le funzionalità!")
 
 # ===========================================================================
 # ANALISI RESI — Radar Salva-Cassa
