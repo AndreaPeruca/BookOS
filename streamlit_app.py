@@ -1091,9 +1091,9 @@ if strumento == "Analisi resi":
             st.markdown('<span class="urgency-bar">Azione richiesta</span>', unsafe_allow_html=True)
         section("Da rendere oggi")
         st.markdown(
-            f'<div style="color: #5C5852; font-size: 13px; margin: -15px 0 15px 0;">'
-            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong> '
-            f'· vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> · giacenza &gt; 0'
+            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;">'
+            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong><br>'
+            f'Vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> copie/mese · giacenza &gt; 0'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -1154,9 +1154,9 @@ if strumento == "Analisi resi":
         # ── Da tenere ────────────────────────────────────────────────────────
         section("Da tenere — in rotazione")
         st.markdown(
-            f'<div style="color: #5C5852; font-size: 13px; margin: -15px 0 15px 0;">'
-            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong> '
-            f'· vendite ultime 30 gg ≥ <strong>{rot_min_ui}</strong>'
+            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;">'
+            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong><br>'
+            f'Vendite ultime 30 gg ≥ <strong>{rot_min_ui}</strong> copie/mese'
             f'</div>',
             unsafe_allow_html=True
         )
@@ -1176,8 +1176,9 @@ if strumento == "Analisi resi":
         # ── Invenduto scaduto ─────────────────────────────────────────────
         section("Invenduto scaduto")
         st.markdown(
-            f'<div style="color: #5C5852; font-size: 13px; margin: -15px 0 15px 0;">'
-            f'Fatturati prima del <strong>{soglia_inv.strftime("%d/%m/%Y")}</strong> · fuori dalla finestra di resa'
+            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;">'
+            f'Fatturati prima del <strong>{soglia_inv.strftime("%d/%m/%Y")}</strong><br>'
+            f'Fuori dalla finestra di resa'
             f'</div>',
             unsafe_allow_html=True
         )
