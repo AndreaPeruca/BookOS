@@ -671,21 +671,17 @@ def processa_magazzino(df_raw: pd.DataFrame, soglia_invenduto, finestra_start, f
 st.markdown("""
 <script>
 (function() {
-    function purgeIconText() {
-        var walker = document.createTreeWalker(
-            document.body, NodeFilter.SHOW_TEXT, null, false
-        );
-        var node;
-        while ((node = walker.nextNode())) {
-            if (node.nodeValue && node.nodeValue.indexOf('keyboard_') !== -1) {
-                node.nodeValue = '';
-            }
-        }
+    function purgeIconTooltips() {
+        ['title', 'aria-label', 'aria-description'].forEach(function(attr) {
+            document.querySelectorAll('[' + attr + '*="keyboard_"]').forEach(function(el) {
+                el.removeAttribute(attr);
+            });
+        });
     }
-    purgeIconText();
-    setTimeout(purgeIconText, 300);
-    setTimeout(purgeIconText, 1000);
-    setTimeout(purgeIconText, 3000);
+    purgeIconTooltips();
+    setTimeout(purgeIconTooltips, 300);
+    setTimeout(purgeIconTooltips, 1000);
+    setTimeout(purgeIconTooltips, 3000);
 })();
 </script>
 """, unsafe_allow_html=True)
