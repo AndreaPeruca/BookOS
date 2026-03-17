@@ -43,7 +43,7 @@ SCHEMA_MAGAZZINO = {"Titolo", "Autore", "ISBN", "Editore", "Data_Fatturazione",
 
 USATO_CONTO_VENDITA = 0.40
 
-PAGINE = ["Dashboard", "Analisi resi", "Calcolatore margine ordine", "Gestione usato", "Analisi storica", "Simulatore ordine"]
+PAGINE = ["Dashboard", "Analisi resi", "Costo Scaffale", "Calcolatore margine ordine", "Gestione usato", "Analisi storica", "Simulatore ordine"]
 
 # Percorso inventario usato — stessa cartella del file .py
 INVENTORY_FILE = pathlib.Path(__file__).parent / "inventario_usato.json"
@@ -285,6 +285,8 @@ PERSISTENT_PREFS = {
     "calc_personale",
     "calc_altri",
     "calc_inv_target",
+    "scaffale_mq",
+    "scaffale_libri_mq",
 }
 
 defaults = {
@@ -304,6 +306,9 @@ defaults = {
     "calc_personale":   0.0,
     "calc_altri":       0.0,
     "calc_inv_target":  30,
+    # Costo Scaffale
+    "scaffale_mq":      50.0,
+    "scaffale_libri_mq": 30,
     # Gestione usato — form persiste tra navigazioni
     "u_titolo":         "",
     "u_autore":         "",
@@ -1273,6 +1278,7 @@ with st.sidebar:
     nav_labels = {
         "Dashboard":                  "📊 Dashboard",
         "Analisi resi":               f"Radar Salva-Cassa{'  ✓' if mag_ok else ''}",
+        "Costo Scaffale":             f"💰 Costo Scaffale{'  ✓' if mag_ok else ''}",
         "Calcolatore margine ordine": "Calcolatore margine",
         "Gestione usato":             f"Gestione usato{'  ' + str(n_usato) if n_usato > 0 else ''}",
         "Analisi storica":            f"Analisi storica{'  ✓' if storico_ok else ''}",
@@ -2070,6 +2076,193 @@ if strumento == "Analisi resi":
             file_name="Gestionale_Magazzino.csv",
             mime="text/csv"
         )
+
+# ===========================================================================
+# COSTO SCAFFALE — Quanto costa tenere un libro sullo scaffale?
+# ===========================================================================
+elif strumento == "Costo Scaffale":
+    page_header("Costo Scaffale", "Quanto ti costa tenere un libro sullo scaffale? Confronta il costo di giacenza col margine atteso.")
+
+    df_mag = st.session_state.get("df_mag")
+
+    if df_mag is None:
+        empty_state("📦", "Nessun file caricato", "Carica il tuo gestionale dalla barra laterale per analizzare i costi di scaffale.")
+    else:
+        # ── Parametri negozio ──────────────────────────────────────────
+        with st.expander("⚙️ Parametri negozio", expanded=True):
+            c1, c2, c3 = st.columns(3)
+            scaffale_mq = c1.number_input(
+                "Superficie negozio (mq)", min_value=5.0, max_value=500.0,
+                value=float(st.session_state.get("scaffale_mq", 50.0)), step=5.0,
+                key="scaffale_mq",
+                help="Superficie totale del negozio in metri quadrati"
+            )
+            scaffale_libri_mq = c2.number_input(
+                "Libri per mq (stimati)", min_value=5, max_value=200,
+                value=int(st.session_state.get("scaffale_libri_mq", 30)), step=5,
+                key="scaffale_libri_mq",
+                help="Quanti libri puoi esporre per metro quadrato di scaffale"
+            )
+
+            # Costi fissi dal Calcolatore margine
+            affitto = st.session_state.get("calc_affitto", 0.0)
+            utenze = st.session_state.get("calc_utenze", 0.0)
+            personale = st.session_state.get("calc_personale", 0.0)
+            altri = st.session_state.get("calc_altri", 0.0)
+            costi_mensili = affitto + utenze + personale + altri
+
+            c3.metric("Costi fissi mensili", fmt_euro(costi_mensili))
+
+            if costi_mensili == 0:
+                st.warning("⚠️ I costi fissi sono a zero. Inseriscili nel **Calcolatore margine ordine** per un'analisi accurata.")
+
+        # ── Calcolo ──────────────────────────────────────────────────
+        capacita = scaffale_mq * scaffale_libri_mq
+        costo_giorno_posto = (costi_mensili / 30 / capacita) if capacita > 0 else 0
+
+        # Prepara DataFrame analisi
+        df = df_mag.copy()
+
+        # Parse date fatturazione
+        df["_data_fatt"] = pd.to_datetime(df["Data_Fatturazione"], dayfirst=True, errors="coerce")
+        df["Giorni_in_magazzino"] = (pd.Timestamp(DATA_SISTEMA) - df["_data_fatt"]).dt.days
+        df["Giorni_in_magazzino"] = df["Giorni_in_magazzino"].fillna(0).clip(lower=0).astype(int)
+
+        # Costi e margini
+        df["Costo_scaffale_accumulato"] = df["Giorni_in_magazzino"] * df["Giacenza"] * costo_giorno_posto
+        df["Vendite_giorno"] = df["Vendute_Ultimi_30_Giorni"] / 30
+
+        # Giorni per smaltire (inf se vendite = 0)
+        df["Giorni_per_smaltire"] = np.where(
+            df["Vendite_giorno"] > 0,
+            df["Giacenza"] / df["Vendite_giorno"],
+            np.inf
+        )
+
+        # Costo futuro (giacenza media = Giacenza/2 perché decresce linearmente)
+        df["Costo_scaffale_futuro"] = np.where(
+            df["Vendite_giorno"] > 0,
+            df["Giorni_per_smaltire"] * (df["Giacenza"] / 2) * costo_giorno_posto,
+            df["Giacenza"] * costo_giorno_posto * 365  # stima 1 anno se non vende
+        )
+
+        # Margine atteso
+        df["Margine_unitario"] = df["Sconto_Libreria"]
+        df["Margine_atteso"] = df["Margine_unitario"] * df["Giacenza"]
+
+        # Valore netto = margine atteso - costo futuro di scaffale
+        df["Valore_netto"] = df["Margine_atteso"] - df["Costo_scaffale_futuro"]
+
+        # Giorni al break-even
+        df["Giorni_break_even"] = np.where(
+            (df["Giacenza"] * costo_giorno_posto) > 0,
+            df["Margine_atteso"] / (df["Giacenza"] * costo_giorno_posto),
+            np.inf
+        )
+
+        # Segnale
+        def _segnale(row):
+            if row["Valore_netto"] <= 0:
+                return "🔴"
+            elif row["Giorni_per_smaltire"] > 180:
+                return "🟡"
+            else:
+                return "🟢"
+        df["Segnale"] = df.apply(_segnale, axis=1)
+
+        # ── Metriche riepilogative ───────────────────────────────────
+        st.divider()
+        n_rossi = (df["Segnale"] == "🔴").sum()
+        costo_mensile_totale = df["Giacenza"].sum() * costo_giorno_posto * 30
+        margine_totale = df["Margine_atteso"].sum()
+        erosione = (costo_mensile_totale / margine_totale * 100) if margine_totale > 0 else 0
+
+        m1, m2, m3, m4 = st.columns(4)
+        with m1:
+            metric_card("Costo/giorno per posto", f"{costo_giorno_posto:.3f} €", "neutral")
+        with m2:
+            metric_card("Libri in perdita", str(n_rossi), "negative" if n_rossi > 0 else "positive")
+        with m3:
+            metric_card("Costo scaffale/mese", fmt_euro(costo_mensile_totale), "negative")
+        with m4:
+            metric_card("Margine eroso", f"{erosione:.1f}%", "negative" if erosione > 15 else "neutral")
+
+        # ── Tabella principale ───────────────────────────────────────
+        st.divider()
+        section("📋 Analisi per titolo")
+
+        df_display = df[["Segnale", "Titolo", "Autore", "Editore", "Giacenza",
+                         "Giorni_in_magazzino", "Vendute_Ultimi_30_Giorni",
+                         "Costo_scaffale_accumulato", "Costo_scaffale_futuro",
+                         "Margine_atteso", "Valore_netto", "Giorni_break_even"]].copy()
+
+        # Formatta colonne euro
+        for col in ["Costo_scaffale_accumulato", "Costo_scaffale_futuro", "Margine_atteso", "Valore_netto"]:
+            df_display[col] = df_display[col].round(2)
+
+        # Giorni break-even: mostra ∞ per infinito
+        df_display["Giorni_break_even"] = df_display["Giorni_break_even"].apply(
+            lambda x: "∞" if x == np.inf else f"{x:.0f}"
+        )
+
+        df_display = df_display.rename(columns={
+            "Giorni_in_magazzino": "Giorni mag.",
+            "Vendute_Ultimi_30_Giorni": "Vendite/mese",
+            "Costo_scaffale_accumulato": "Costo accum. €",
+            "Costo_scaffale_futuro": "Costo futuro €",
+            "Margine_atteso": "Margine att. €",
+            "Valore_netto": "Valore netto €",
+            "Giorni_break_even": "Break-even gg",
+        })
+
+        df_display = df_display.sort_values("Valore netto €", ascending=True)
+
+        st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        # ── Grafico scatter ──────────────────────────────────────────
+        if PLOTLY:
+            st.divider()
+            section("📈 Mappa costi vs margine")
+
+            df_chart = df[df["Giorni_per_smaltire"] != np.inf].copy()
+            if len(df_chart) > 0:
+                color_map = {"🟢": "#22C55E", "🟡": "#F59E0B", "🔴": "#EF4444"}
+                fig = px.scatter(
+                    df_chart,
+                    x="Giorni_in_magazzino",
+                    y="Valore_netto",
+                    size="Giacenza",
+                    color="Segnale",
+                    color_discrete_map=color_map,
+                    hover_data=["Titolo", "Editore", "Giacenza", "Vendute_Ultimi_30_Giorni"],
+                    size_max=40,
+                )
+                fig.add_hline(y=0, line_dash="dash", line_color="#999", annotation_text="Break-even")
+                _econ(fig, title="Valore netto scaffale per titolo",
+                      subtitle="Sotto lo zero = il libro ti costa più di quanto rende",
+                      yprefix="€", x0=True)
+
+        # ── Export ───────────────────────────────────────────────────
+        st.divider()
+        csv_export = df_display.to_csv(index=False).encode("utf-8")
+        st.download_button(
+            "📥 Esporta analisi costi scaffale",
+            data=csv_export,
+            file_name="costo_scaffale_analisi.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
+
+        # ── Legenda ──────────────────────────────────────────────────
+        st.markdown("""
+        <div style="padding: 12px; background: #E8F4F8; border-left: 4px solid #0284C7; border-radius: 4px; color: #0C4A6E; margin-top: 12px;">
+        <strong>Come leggere i risultati:</strong><br>
+        🟢 <strong>Verde</strong> — Il margine copre i costi di scaffale. Tieni il libro.<br>
+        🟡 <strong>Giallo</strong> — Il margine copre i costi, ma ci vorranno oltre 6 mesi per vendere tutto.<br>
+        🔴 <strong>Rosso</strong> — Il costo di scaffale supera il margine atteso. Valuta la resa.<br><br>
+        <em>Il "Valore netto" è il margine atteso meno il costo futuro di tenere il libro sullo scaffale fino alla vendita.</em>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ===========================================================================
 # CALCOLATORE MARGINE ORDINE
