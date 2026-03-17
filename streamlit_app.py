@@ -948,14 +948,10 @@ with st.sidebar:
         "Vai a:",
         PAGINE,
         index=idx_current,
-        key="pagina_select",
+        key="pagina",
         format_func=lambda x: nav_labels[x],
         label_visibility="collapsed"
     )
-
-    # Aggiorna session_state se il valore è cambiato
-    if strumento != st.session_state.get("pagina"):
-        st.session_state["pagina"] = strumento
 
     if strumento == "Analisi resi":
         st.divider()
