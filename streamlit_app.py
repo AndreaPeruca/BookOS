@@ -5,6 +5,7 @@ Esegui con: streamlit run bookstore_os.py
 BUILD: 2026-03-17 19:05
 """
 
+import html
 import io
 import json
 import logging
@@ -14,7 +15,7 @@ import urllib.request
 import numpy as np
 import streamlit as st
 import pandas as pd
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from urllib.parse import quote_plus
 
 # Configurazione logging
@@ -34,7 +35,7 @@ st.set_page_config(page_title="BookStore OS", page_icon="📚", layout="wide", i
 
 DATA_SISTEMA          = date.today()
 SOGLIA_INVENDUTO      = DATA_SISTEMA - timedelta(days=182)
-SOGLIA_FINESTRA_START = DATA_SISTEMA - timedelta(days=182)
+SOGLIA_FINESTRA_START = DATA_SISTEMA - timedelta(days=182)  # coincide con SOGLIA_INVENDUTO per design: la finestra parte sempre da 6 mesi fa
 SOGLIA_FINESTRA_END   = SOGLIA_FINESTRA_START + timedelta(days=30)
 SOGLIA_ROTAZIONE_MIN  = 3
 
@@ -117,10 +118,33 @@ COL_ALIASES = {
 # ---------------------------------------------------------------------------
 # PERSISTENZA INVENTARIO USATO
 # ---------------------------------------------------------------------------
+_INVENTORY_REQUIRED_KEYS = {"Titolo", "Autore", "Condizione", "Modalità",
+                            "Prezzo cov.", "% vendita", "Prezzo vend.", "Tua quota",
+                            "_prezzo_num", "_quota_num"}
+
+def _is_valid_inventory_item(item: object) -> bool:
+    """Verifica che una voce del JSON abbia la struttura attesa (chiavi e tipi base)."""
+    if not isinstance(item, dict):
+        return False
+    if not _INVENTORY_REQUIRED_KEYS.issubset(item.keys()):
+        return False
+    if not isinstance(item.get("_prezzo_num"), (int, float)):
+        return False
+    if not isinstance(item.get("_quota_num"), (int, float)):
+        return False
+    return True
+
 def load_inventory() -> list:
     try:
         if INVENTORY_FILE.exists():
-            return json.loads(INVENTORY_FILE.read_text(encoding="utf-8"))
+            data = json.loads(INVENTORY_FILE.read_text(encoding="utf-8"))
+            if not isinstance(data, list):
+                logging.warning("inventario_usato.json: struttura non valida (attesa lista)")
+                return []
+            valid = [item for item in data if _is_valid_inventory_item(item)]
+            if len(valid) < len(data):
+                logging.warning(f"inventario_usato.json: scartate {len(data) - len(valid)} voci non valide")
+            return valid
     except Exception:
         pass
     return []
@@ -138,8 +162,7 @@ def load_preferences() -> dict:
     """Carica le preferenze utente salvate (tema, colonne visibili, etc.)"""
     try:
         if PREFERENCES_FILE.exists():
-            data = json.loads(PREFERENCES_FILE.read_text(encoding="utf-8"))
-            return data
+            return json.loads(PREFERENCES_FILE.read_text(encoding="utf-8"))
     except Exception:
         pass
     return {}
@@ -186,6 +209,7 @@ def save_decision_log(action_type: str, titoli: list, n_copie: int, valore: floa
         STORICO_FILE.write_text(
             json.dumps(storico, ensure_ascii=False, indent=2), encoding="utf-8"
         )
+        load_storico.clear()
     except Exception:
         pass
 
@@ -414,17 +438,15 @@ _TONE = {
     "neutral":  {"bar": "#C8BFB0", "val": "#16130F"},
 }
 
-def get_theme_colors():
-    """Return theme colors (light mode)."""
-    return {
-        "text": "#16130F",
-        "text_secondary": "#5C5852",
-        "text_muted": "#9B9590",
-        "bg": "#F5F1EC",
-        "bg_card": "#FFFFFF",
-        "border": "#E7E3DC",
-        "accent": "#B5362C",
-    }
+THEME_COLORS = {
+    "text": "#16130F",
+    "text_secondary": "#5C5852",
+    "text_muted": "#9B9590",
+    "bg": "#F5F1EC",
+    "bg_card": "#FFFFFF",
+    "border": "#E7E3DC",
+    "accent": "#B5362C",
+}
 
 
 def show_toast(message: str, toast_type: str = "info", duration: int = 4000) -> None:
@@ -439,10 +461,13 @@ def show_toast(message: str, toast_type: str = "info", duration: int = 4000) -> 
     if toast_type not in valid_types:
         toast_type = "info"
 
+    # json.dumps produce stringhe JS correttamente escaped (apici, backslash, newline…)
+    msg_js  = json.dumps(str(message))
+    type_js = json.dumps(toast_type)
     st.markdown(f"""
     <script>
     if (window.showToast) {{
-        window.showToast('{message}', '{toast_type}', {duration});
+        window.showToast({msg_js}, {type_js}, {int(duration)});
     }}
     </script>
     """, unsafe_allow_html=True)
@@ -468,7 +493,8 @@ def create_help_tooltip(title: str, description: str, examples: str = "", recomm
     return content
 
 
-def get_file_stats(df: pd.DataFrame, schema: set) -> dict:
+@st.cache_data(show_spinner=False)
+def get_file_stats(df: pd.DataFrame, schema: frozenset) -> dict:
     """Calcola statistiche dettagliate del file per lo stato display."""
     try:
         total_rows = len(df)
@@ -489,6 +515,7 @@ def get_file_stats(df: pd.DataFrame, schema: set) -> dict:
 
         # Data range per Data_Fatturazione
         date_range = "N/A"
+        valid_dates = pd.Series([], dtype="datetime64[ns]")
         if "Data_Fatturazione" in df.columns:
             try:
                 dates = pd.to_datetime(df["Data_Fatturazione"], errors='coerce')
@@ -497,7 +524,7 @@ def get_file_stats(df: pd.DataFrame, schema: set) -> dict:
                     min_date = valid_dates.min()
                     max_date = valid_dates.max()
                     date_range = f"{min_date.strftime('%d/%m/%y')} → {max_date.strftime('%d/%m/%y')}"
-            except:
+            except Exception:
                 pass
 
         # Quality score (0-100)
@@ -1076,6 +1103,108 @@ button[data-testid="collapsedControl"],
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; transition: background var(--t); }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* ── RESPONSIVE — TABLET (≤ 1024px) ────────────────────── */
+@media (max-width: 1024px) {
+    .main .block-container {
+        max-width: 100% !important;
+        padding-left: 1.25rem !important;
+        padding-right: 1.25rem !important;
+    }
+    .page-hero-title { font-size: 1.8rem; }
+    .mc-value { font-size: 1.5rem; }
+}
+
+/* ── RESPONSIVE — MOBILE (≤ 768px) ─────────────────────── */
+@media (max-width: 768px) {
+
+    /* Container */
+    .main .block-container {
+        padding-left: .75rem !important;
+        padding-right: .75rem !important;
+        padding-top: 1rem !important;
+    }
+
+    /* Sidebar: ripristina il pulsante collapse e lascia che si chiuda */
+    section[data-testid="stSidebar"] {
+        min-width: unset !important;
+    }
+    button[data-testid="collapsedControl"],
+    [data-testid="collapsedControl"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+    }
+
+    /* Colonne Streamlit: stacking verticale su mobile */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: wrap !important;
+        gap: .5rem !important;
+    }
+    [data-testid="column"] {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+        min-width: 100% !important;
+    }
+
+    /* Tipografia */
+    .page-hero-title   { font-size: 1.45rem; letter-spacing: -.01em; }
+    .page-hero-sub     { font-size: .78rem; }
+    .section-title     { font-size: .95rem; }
+    .mc-value          { font-size: 1.35rem; }
+    .mc-label          { font-size: .6rem; }
+
+    /* Metric cards: layout orizzontale compatto */
+    .metric-card {
+        padding: .65rem .9rem;
+        margin-bottom: .4rem;
+    }
+
+    /* Toast: tutta la larghezza in alto */
+    .toast-container {
+        right: 8px;
+        left: 8px;
+        top: 8px;
+    }
+    .toast { max-width: 100%; }
+
+    /* Tabelle: scroll orizzontale */
+    [data-testid="stDataFrame"] {
+        overflow-x: auto !important;
+    }
+
+    /* Grafici Plotly: forza larghezza piena */
+    [data-testid="stPlotlyChart"] {
+        width: 100% !important;
+    }
+
+    /* File uploader: testo più leggibile */
+    [data-testid="stFileUploaderDropzoneInstructions"] {
+        font-size: .75rem !important;
+    }
+
+    /* Bottoni: full width su mobile */
+    [data-testid="baseButton-primary"],
+    [data-testid="baseButton-secondary"],
+    [data-testid="stDownloadButton"] > button {
+        width: 100% !important;
+    }
+
+    /* Expander: padding ridotto */
+    [data-testid="stExpander"] summary {
+        padding: .55rem .75rem !important;
+        font-size: .78rem !important;
+    }
+}
+
+/* ── RESPONSIVE — SMALL MOBILE (≤ 480px) ───────────────── */
+@media (max-width: 480px) {
+    .page-hero-title { font-size: 1.25rem; }
+    .page-hero { padding-bottom: .8rem; margin-bottom: 1.2rem; }
+    .mc-value  { font-size: 1.2rem; }
+    .market-links { gap: .4rem; }
+    .market-links a { font-size: .7rem; padding: 2px 8px; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -1197,6 +1326,19 @@ def validate_numeric_data(series, name="dati"):
         logging.warning(f"Errore validazione '{name}': {str(e)}")
         return False
 
+_CSV_INJECTION_CHARS = ("=", "+", "-", "@", "|", "%")
+
+def sanitize_csv(df: pd.DataFrame) -> pd.DataFrame:
+    """Prefissa con apostrofo le celle stringa che iniziano con caratteri di formula injection.
+    Previene l'esecuzione di formule in Excel/LibreOffice all'apertura del CSV."""
+    df = df.copy()
+    for col in df.select_dtypes(include="object").columns:
+        df[col] = df[col].apply(
+            lambda v: ("'" + v) if isinstance(v, str) and v.startswith(_CSV_INJECTION_CHARS) else v
+        )
+    return df
+
+
 def safe_divide(numerator, denominator, default=0):
     """Divisione sicura con protezione da divisioni per zero."""
     try:
@@ -1246,7 +1388,7 @@ def export_to_excel_bytes(dataframes_dict: dict) -> bytes:
                         try:
                             if len(str(cell.value)) > max_length:
                                 max_length = len(str(cell.value))
-                        except:
+                        except Exception:
                             pass
                     adjusted_width = min(max_length + 2, 50)
                     worksheet.column_dimensions[column_letter].width = adjusted_width
@@ -1305,7 +1447,7 @@ with st.sidebar:
 
     if strumento == "Analisi resi":
         st.divider()
-        colors = get_theme_colors()
+        colors = THEME_COLORS
         st.markdown(f'<span style="color: {colors["text_secondary"]}; font-size: 13px; font-weight: 500;">📋 File di lavoro · ✓ = caricato</span>', unsafe_allow_html=True)
         st.markdown("📁 **Trascina il file CSV qui oppure clicca per sfogliare**")
         mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
@@ -1313,7 +1455,7 @@ with st.sidebar:
         with _bcol1:
             if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
                 try:
-                    demo_df = pd.read_csv(pathlib.Path(__file__).parent / "storico_apr2024.csv")
+                    demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
                     demo_df = normalize_columns(demo_df)
                     if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
                         st.session_state["df_mag"] = demo_df
@@ -1381,9 +1523,9 @@ if strumento == "Dashboard":
         section("📂 File Caricato")
 
         # Calcola statistiche file
-        file_stats = get_file_stats(df_mag, SCHEMA_MAGAZZINO)
+        file_stats = get_file_stats(df_mag, frozenset(SCHEMA_MAGAZZINO))
         file_name = st.session_state.get("df_mag_name", "N/A")
-        colors = get_theme_colors()
+        colors = THEME_COLORS
 
         # Card principale con info file
         col1, col2, col3 = st.columns([2, 1, 1])
@@ -1475,7 +1617,7 @@ if strumento == "Dashboard":
             st.markdown("### 🎯 Opzione 2: Prova con dati demo")
             if st.button("📊 Carica dati di esempio", use_container_width=True, key="demo_btn_dash"):
                 try:
-                    demo_df = pd.read_csv(pathlib.Path(__file__).parent / "storico_apr2024.csv")
+                    demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
                     demo_df = normalize_columns(demo_df)
                     if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
                         st.session_state["df_mag"] = demo_df
@@ -1669,7 +1811,7 @@ if strumento == "Analisi resi":
         if not df_filtered.empty:
             st.markdown('<span class="urgency-bar">Azione richiesta</span>', unsafe_allow_html=True)
         section("Da rendere oggi")
-        colors = get_theme_colors()
+        colors = THEME_COLORS
         st.markdown(
             f"<div style=\"color: {colors['text_secondary']}; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: -15px 0 15px 0;\">"
             f"Fatturati tra <strong>{soglia_fs.strftime('%d/%m/%Y')}</strong> e <strong>{soglia_fe.strftime('%d/%m/%Y')}</strong><br>"
@@ -1696,7 +1838,7 @@ if strumento == "Analisi resi":
             with col_csv:
                 _clicked_rendere = st.download_button(
                     label="📥 Esporta CSV",
-                    data=df_rendere_sorted.to_csv(index=False).encode("utf-8-sig"),
+                    data=sanitize_csv(df_rendere_sorted).to_csv(index=False).encode("utf-8-sig"),
                     file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
                     mime="text/csv",
                     use_container_width=True
@@ -1845,7 +1987,7 @@ if strumento == "Analisi resi":
             with _wc2:
                 _clicked_scaduto = st.download_button(
                     label="📥 Esporta invenduto (CSV)",
-                    data=df_scaduto_sorted.to_csv(index=False).encode("utf-8-sig"),
+                    data=sanitize_csv(df_scaduto_sorted).to_csv(index=False).encode("utf-8-sig"),
                     file_name=f"invenduto_scaduto_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
                     mime="text/csv",
                 )
@@ -2036,7 +2178,7 @@ if strumento == "Analisi resi":
                 } for _e in _storico])
                 st.download_button(
                     label="📥 Scarica storico completo (CSV)",
-                    data=_storico_df.to_csv(index=False).encode("utf-8-sig"),
+                    data=sanitize_csv(_storico_df).to_csv(index=False).encode("utf-8-sig"),
                     file_name=f"storico_decisioni_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
                     mime="text/csv",
                 )
@@ -2244,7 +2386,7 @@ elif strumento == "Costo Scaffale":
 
         # ── Export ───────────────────────────────────────────────────
         st.divider()
-        csv_export = df_display.to_csv(index=False).encode("utf-8")
+        csv_export = sanitize_csv(df_display).to_csv(index=False).encode("utf-8")
         st.download_button(
             "📥 Esporta analisi costi scaffale",
             data=csv_export,
@@ -2424,7 +2566,7 @@ elif strumento == "Calcolatore margine ordine":
         titolo_label = st.session_state.get("calc_titolo", "").strip() or "ordine"
         st.download_button(
             label="📥 Esporta simulazione (CSV)",
-            data=df_riepilogo.to_csv(index=False).encode("utf-8-sig"),
+            data=sanitize_csv(df_riepilogo).to_csv(index=False).encode("utf-8-sig"),
             file_name=f"margine_{titolo_label[:30].replace(' ','_')}_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
             mime="text/csv",
         )
@@ -2644,7 +2786,7 @@ elif strumento == "Gestione usato":
             # ── Azioni ──────────────────────────────────────────────────────
             c_exp, c_del = st.columns([2, 1])
             with c_exp:
-                st.download_button("📥 Esporta CSV", df_inv.to_csv(index=False).encode("utf-8-sig"),
+                st.download_button("📥 Esporta CSV", sanitize_csv(df_inv).to_csv(index=False).encode("utf-8-sig"),
                                    "inventario_usato.csv", "text/csv", use_container_width=True)
             with c_del:
                 if not st.session_state["svuota_confirm"]:
@@ -2686,6 +2828,10 @@ elif strumento == "Gestione usato":
                 labels_html = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem">'
                 for item in inv:
                     col_c = _cond_col.get(item["Condizione"], "#888")
+                    titolo_e    = html.escape(item["Titolo"])
+                    autore_e    = html.escape(item["Autore"])
+                    prezzo_e    = html.escape(item["Prezzo vend."])
+                    condizione_e = html.escape(item["Condizione"])
                     labels_html += f"""
                     <div style="border:1px solid #E0D8CF;border-radius:6px;padding:.65rem .9rem;
                                 background:#fff;display:flex;justify-content:space-between;
@@ -2693,14 +2839,14 @@ elif strumento == "Gestione usato":
                         <div style="min-width:0">
                             <div style="font-family:'EB Garamond',serif;font-size:.92rem;
                                         font-weight:600;white-space:nowrap;overflow:hidden;
-                                        text-overflow:ellipsis">{item['Titolo']}</div>
+                                        text-overflow:ellipsis">{titolo_e}</div>
                             <div style="font-size:.72rem;color:#888;white-space:nowrap;
-                                        overflow:hidden;text-overflow:ellipsis">{item['Autore']}</div>
+                                        overflow:hidden;text-overflow:ellipsis">{autore_e}</div>
                         </div>
                         <div style="text-align:right;flex-shrink:0">
-                            <div style="font-size:1rem;font-weight:700">{item['Prezzo vend.']}</div>
+                            <div style="font-size:1rem;font-weight:700">{prezzo_e}</div>
                             <div style="font-size:.62rem;font-weight:600;color:{col_c};
-                                        text-transform:uppercase;letter-spacing:.07em">{item['Condizione']}</div>
+                                        text-transform:uppercase;letter-spacing:.07em">{condizione_e}</div>
                         </div>
                     </div>"""
                 labels_html += "</div>"
@@ -3306,7 +3452,7 @@ elif strumento == "Analisi storica":
                         st.dataframe(tit_show, use_container_width=True, hide_index=True)
                         st.download_button(
                             "📥 Esporta titoli fermi (CSV)",
-                            data=tit_show.to_csv(index=False).encode("utf-8-sig"),
+                            data=sanitize_csv(tit_show).to_csv(index=False).encode("utf-8-sig"),
                             file_name=f"titoli_fermi_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
                             mime="text/csv",
                         )
@@ -3404,7 +3550,7 @@ elif strumento == "Analisi storica":
                 st.dataframe(df_agg_show, use_container_width=True, hide_index=True)
                 st.download_button(
                     "📥 Esporta riepilogo (CSV)",
-                    data=df_agg_show.to_csv(index=False).encode("utf-8-sig"),
+                    data=sanitize_csv(df_agg_show).to_csv(index=False).encode("utf-8-sig"),
                     file_name=f"storico_riepilogo_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
                     mime="text/csv",
                 )
