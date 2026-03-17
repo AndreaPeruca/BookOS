@@ -958,7 +958,7 @@ with st.sidebar:
         st.caption("File di lavoro · ✓ = caricato")
         _col1, _col2 = st.columns(2)
         with _col1:
-            mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="visible", use_container_width=True)
+            mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="visible")
         with _col2:
             if st.button("Carica demo", use_container_width=True, key="load_demo_btn"):
                 try:
