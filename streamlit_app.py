@@ -1019,8 +1019,9 @@ hr { border-color: var(--border) !important; opacity: 1 !important; }
 
 /* Sidebar toggle esterno — sempre visibile */
 button[data-testid="collapsedControl"] { display: flex !important; visibility: visible !important; opacity: 1 !important; }
-/* Header interno alla sidebar: nascosto (contiene solo il pulsante con icona non caricata) */
-[data-testid="stSidebarHeader"] { display: none !important; }
+/* Header sidebar: font-size 0 elimina testo grezzo icona, il pulsante resta cliccabile */
+[data-testid="stSidebarHeader"] { font-size: 0 !important; line-height: 0 !important; }
+[data-testid="stSidebarHeader"] button { display: flex !important; width: 2rem !important; height: 2rem !important; }
 
 /* ── ANIMATIONS ─────────────────────────────────────────── */
 @keyframes fadeUp {
