@@ -773,6 +773,29 @@ section[data-testid="stSidebar"] [data-testid="stRadio"] label > div:first-child
 }
 section[data-testid="stSidebar"] hr { border-color: #252420 !important; margin: .5rem 0 !important; }
 
+.sb-section-label {
+    font-size: .62rem; font-weight: 600; letter-spacing: .09em;
+    color: #3A3835 !important; text-transform: uppercase;
+    margin: 1.1rem 0 .5rem; padding: 0;
+}
+.sb-status-row {
+    display: flex; align-items: center; gap: .55rem;
+    font-size: .79rem; padding: .22rem 0;
+}
+.sb-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.sb-dot.on  { background: #22C55E; box-shadow: 0 0 6px rgba(34,197,94,.35); }
+.sb-dot.off { background: #2E2C29; }
+.sb-kpi-list { margin: 0; }
+.sb-kpi-row {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: .28rem 0; border-bottom: 1px solid #1E1E1C;
+}
+.sb-kpi-row:last-child { border-bottom: none; }
+.sb-kpi-label { font-size: .75rem; color: #5A5855 !important; }
+.sb-kpi-value { font-size: .8rem; font-weight: 600; color: #EDEAE5 !important; }
+.sb-kpi-value.warning { color: #F59E0B !important; }
+.sb-kpi-value.urgent  { color: #EF4444 !important; }
+
 /* Captions e label file uploader */
 section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p,
 section[data-testid="stSidebar"] .stCaption,
@@ -1502,31 +1525,51 @@ with st.sidebar:
             <div class="sb-brand-sub">Toolkit librai indipendenti</div>
         </div>
     </div>""", unsafe_allow_html=True)
-    if n_usato > 0:
-        st.divider()
-        st.markdown(f"💾 **Inventario:** {n_usato} libri · `{INVENTORY_FILE.name}`")
-    st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
 
-# ── Upload banner (sopra i tab, visibile solo senza file caricato) ────────
-if not mag_ok:
-    st.markdown("""<div class="upload-banner">
-        <div class="upload-banner-icon">📂</div>
-        <div class="upload-banner-text">
-            <div class="upload-banner-title">Carica il gestionale per iniziare</div>
-            <div class="upload-banner-sub">CSV esportato dal tuo software · oppure prova i dati demo</div>
-        </div>
-    </div>""", unsafe_allow_html=True)
-    _ub_file, _ub_demo = st.columns([3, 1])
-    with _ub_file:
-        mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
-    with _ub_demo:
-        st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
-        if st.button("Demo", use_container_width=True, key="load_demo_btn"):
-            st.session_state["df_mag"] = get_demo_df()
-            st.session_state["df_mag_name"] = "demo_magazzino.csv [DEMO]"
-            st.rerun()
-else:
-    mag_file_sb = None
+    # ── Upload gestionale ────────────────────────────────────
+    st.markdown('<div class="sb-section-label">Carica gestionale</div>', unsafe_allow_html=True)
+    mag_file_sb = st.file_uploader("Gestionale magazzino", type="csv", key="mag_up", label_visibility="collapsed")
+    if st.button("Prova con i dati demo", use_container_width=True, key="load_demo_btn"):
+        st.session_state["df_mag"] = get_demo_df()
+        st.session_state["df_mag_name"] = "demo_magazzino.csv [DEMO]"
+        st.rerun()
+
+    # ── Stato dati ───────────────────────────────────────────
+    mag_label   = st.session_state.get("df_mag_name", "Magazzino") if mag_ok else "Magazzino"
+    usato_label = f"Usato · {n_usato} libri" if n_usato > 0 else "Usato"
+    st.markdown(f"""<div class="sb-section-label">Dati caricati</div>
+<div>
+  <div class="sb-status-row"><span class="sb-dot {'on' if mag_ok else 'off'}"></span><span>{mag_label}</span></div>
+  <div class="sb-status-row"><span class="sb-dot {'on' if n_usato > 0 else 'off'}"></span><span>{usato_label}</span></div>
+  <div class="sb-status-row"><span class="sb-dot {'on' if storico_ok else 'off'}"></span><span>Storico comparativo</span></div>
+</div>""", unsafe_allow_html=True)
+
+    # ── KPI veloci (solo se magazzino caricato) ──────────────
+    if mag_ok:
+        df_sb   = st.session_state["df_mag"]
+        seg_sb  = processa_magazzino(df_sb, SOGLIA_INVENDUTO, SOGLIA_FINESTRA_START, SOGLIA_FINESTRA_END, SOGLIA_ROTAZIONE_MIN)
+        n_rend_sb   = len(seg_sb["rendere"])
+        cassa_sb    = seg_sb["rendere"]["Valore_Recuperabile"].sum() if n_rend_sb > 0 else 0.0
+        n_titoli_sb = len(df_sb)
+        rend_cls  = "urgent" if n_rend_sb > 20 else "warning" if n_rend_sb > 0 else ""
+        cassa_cls = "warning" if cassa_sb > 0 else ""
+        st.markdown(f"""<div class="sb-section-label">Magazzino</div>
+<div class="sb-kpi-list">
+  <div class="sb-kpi-row">
+    <span class="sb-kpi-label">Titoli</span>
+    <span class="sb-kpi-value">{n_titoli_sb}</span>
+  </div>
+  <div class="sb-kpi-row">
+    <span class="sb-kpi-label">Da rendere</span>
+    <span class="sb-kpi-value {rend_cls}">{n_rend_sb}</span>
+  </div>
+  <div class="sb-kpi-row">
+    <span class="sb-kpi-label">Cassa recuperabile</span>
+    <span class="sb-kpi-value {cassa_cls}">{fmt_euro(cassa_sb)}</span>
+  </div>
+</div>""", unsafe_allow_html=True)
+
+    st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
 
 get_or_load("df_mag", mag_file_sb, SCHEMA_MAGAZZINO, "Gestionale magazzino")
 mag_ok = st.session_state["df_mag"] is not None
