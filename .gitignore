@@ -22,7 +22,6 @@ Thumbs.db
 
 # Test files (local development)
 test_*.csv
-test_*.py
 stress_*.csv
 *_BACKUP.py
 *_DEMO.py
