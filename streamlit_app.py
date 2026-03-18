@@ -1443,6 +1443,49 @@ def export_to_excel_bytes(dataframes_dict: dict) -> bytes:
         return None
 
 # ---------------------------------------------------------------------------
+# DEMO DATASET — generato dinamicamente con date relative a oggi
+# ---------------------------------------------------------------------------
+def get_demo_df() -> pd.DataFrame:
+    """Restituisce un dataset demo realistico con date sempre aggiornate a oggi.
+
+    La distribuzione è progettata per mostrare tutti i segnali chiave dell'app:
+    - 5 titoli nella finestra di resa (152–182 gg fa) con basse vendite → "Da rendere"
+    - 2 titoli nella finestra con buone vendite → "Da tenere"
+    - 4 titoli scaduti (> 182 gg fa) con basse/zero vendite → "Invenduto scaduto"
+    - 9 titoli recenti (< 152 gg fa) con rotazioni varie → stock normale
+    """
+    oggi = DATA_SISTEMA
+    def d(n): return (oggi - timedelta(days=n)).strftime("%d/%m/%Y")
+
+    rows = [
+        # ── Nella finestra di resa (152–182 gg fa), vendite < 3 → Da rendere ──
+        {"Titolo": "Il nome della rosa",         "Autore": "Umberto Eco",                  "Editore": "Bompiani",    "ISBN": "9788845292613", "Data_Fatturazione": d(155), "Giacenza": 8,  "Vendute_Ultimi_30_Giorni": 0, "Prezzo_Copertina": 19.00, "Sconto_Libreria": 3.42},
+        {"Titolo": "Ferite a morte",              "Autore": "Serena Dandini",               "Editore": "Rizzoli",     "ISBN": "9788842821345", "Data_Fatturazione": d(162), "Giacenza": 12, "Vendute_Ultimi_30_Giorni": 1, "Prezzo_Copertina": 14.50, "Sconto_Libreria": 2.61},
+        {"Titolo": "Il pendolo di Foucault",      "Autore": "Umberto Eco",                  "Editore": "Bompiani",    "ISBN": "9788845232152", "Data_Fatturazione": d(168), "Giacenza": 5,  "Vendute_Ultimi_30_Giorni": 0, "Prezzo_Copertina": 18.00, "Sconto_Libreria": 3.24},
+        {"Titolo": "Baol",                        "Autore": "Stefano Benni",                "Editore": "Feltrinelli", "ISBN": "9788807880018", "Data_Fatturazione": d(172), "Giacenza": 7,  "Vendute_Ultimi_30_Giorni": 0, "Prezzo_Copertina": 11.00, "Sconto_Libreria": 1.98},
+        {"Titolo": "La luna e i falò",            "Autore": "Cesare Pavese",                "Editore": "Einaudi",     "ISBN": "9788806220500", "Data_Fatturazione": d(178), "Giacenza": 4,  "Vendute_Ultimi_30_Giorni": 1, "Prezzo_Copertina": 12.50, "Sconto_Libreria": 2.25},
+        # ── Nella finestra, vendite ≥ 3 → Da tenere ──────────────────────────
+        {"Titolo": "I promessi sposi",            "Autore": "Alessandro Manzoni",           "Editore": "Mondadori",   "ISBN": "9788811360353", "Data_Fatturazione": d(158), "Giacenza": 5,  "Vendute_Ultimi_30_Giorni": 5, "Prezzo_Copertina": 12.00, "Sconto_Libreria": 2.16},
+        {"Titolo": "Se questo è un uomo",         "Autore": "Primo Levi",                   "Editore": "Einaudi",     "ISBN": "9788806219390", "Data_Fatturazione": d(165), "Giacenza": 3,  "Vendute_Ultimi_30_Giorni": 4, "Prezzo_Copertina": 13.50, "Sconto_Libreria": 2.43},
+        # ── Invenduto scaduto (> 182 gg fa) ──────────────────────────────────
+        {"Titolo": "L'amica geniale",             "Autore": "Elena Ferrante",               "Editore": "e/o",         "ISBN": "9788866325772", "Data_Fatturazione": d(250), "Giacenza": 20, "Vendute_Ultimi_30_Giorni": 0, "Prezzo_Copertina": 19.00, "Sconto_Libreria": 3.42},
+        {"Titolo": "Storia di chi fugge",         "Autore": "Elena Ferrante",               "Editore": "e/o",         "ISBN": "9788866325789", "Data_Fatturazione": d(280), "Giacenza": 12, "Vendute_Ultimi_30_Giorni": 0, "Prezzo_Copertina": 19.00, "Sconto_Libreria": 3.42},
+        {"Titolo": "Pinocchio",                   "Autore": "Carlo Collodi",                "Editore": "Einaudi",     "ISBN": "9788811810000", "Data_Fatturazione": d(365), "Giacenza": 22, "Vendute_Ultimi_30_Giorni": 0, "Prezzo_Copertina":  9.90, "Sconto_Libreria": 1.78},
+        {"Titolo": "Dissolvenze",                 "Autore": "Donatella Di Pietrantonio",    "Editore": "Einaudi",     "ISBN": "9788806258001", "Data_Fatturazione": d(220), "Giacenza": 8,  "Vendute_Ultimi_30_Giorni": 2, "Prezzo_Copertina": 17.00, "Sconto_Libreria": 3.06},
+        # ── Stock recente (< 152 gg fa) ──────────────────────────────────────
+        {"Titolo": "Le cosmicomiche",             "Autore": "Italo Calvino",                "Editore": "Einaudi",     "ISBN": "9788804668367", "Data_Fatturazione": d(30),  "Giacenza": 4,  "Vendute_Ultimi_30_Giorni": 6, "Prezzo_Copertina": 13.00, "Sconto_Libreria": 2.34},
+        {"Titolo": "La variante di Lüneburg",     "Autore": "Paolo Maurensig",              "Editore": "Adelphi",     "ISBN": "9788845285745", "Data_Fatturazione": d(45),  "Giacenza": 5,  "Vendute_Ultimi_30_Giorni": 3, "Prezzo_Copertina": 13.00, "Sconto_Libreria": 2.34},
+        {"Titolo": "Sostiene Pereira",            "Autore": "Antonio Tabucchi",             "Editore": "Feltrinelli", "ISBN": "9788807883866", "Data_Fatturazione": d(60),  "Giacenza": 2,  "Vendute_Ultimi_30_Giorni": 4, "Prezzo_Copertina": 13.00, "Sconto_Libreria": 2.34},
+        {"Titolo": "La coscienza di Zeno",        "Autore": "Italo Svevo",                  "Editore": "Einaudi",     "ISBN": "9788804668416", "Data_Fatturazione": d(90),  "Giacenza": 3,  "Vendute_Ultimi_30_Giorni": 4, "Prezzo_Copertina": 13.00, "Sconto_Libreria": 2.34},
+        {"Titolo": "Il gattopardo",               "Autore": "Giuseppe T. di Lampedusa",     "Editore": "Feltrinelli", "ISBN": "9788845274893", "Data_Fatturazione": d(120), "Giacenza": 4,  "Vendute_Ultimi_30_Giorni": 1, "Prezzo_Copertina": 14.00, "Sconto_Libreria": 2.52},
+        {"Titolo": "Cent'anni di solitudine",     "Autore": "Gabriel García Márquez",       "Editore": "Mondadori",   "ISBN": "9788806226480", "Data_Fatturazione": d(100), "Giacenza": 8,  "Vendute_Ultimi_30_Giorni": 0, "Prezzo_Copertina": 14.00, "Sconto_Libreria": 2.52},
+        {"Titolo": "Il giorno della civetta",     "Autore": "Leonardo Sciascia",            "Editore": "Adelphi",     "ISBN": "9788845265716", "Data_Fatturazione": d(140), "Giacenza": 3,  "Vendute_Ultimi_30_Giorni": 5, "Prezzo_Copertina": 12.00, "Sconto_Libreria": 2.16},
+        {"Titolo": "Lessico famigliare",          "Autore": "Natalia Ginzburg",             "Editore": "Einaudi",     "ISBN": "9788806220495", "Data_Fatturazione": d(75),  "Giacenza": 2,  "Vendute_Ultimi_30_Giorni": 3, "Prezzo_Copertina": 12.00, "Sconto_Libreria": 2.16},
+        {"Titolo": "Gomorra",                     "Autore": "Roberto Saviano",              "Editore": "Mondadori",   "ISBN": "9788817003735", "Data_Fatturazione": d(110), "Giacenza": 4,  "Vendute_Ultimi_30_Giorni": 1, "Prezzo_Copertina": 14.00, "Sconto_Libreria": 2.52},
+    ]
+    return pd.DataFrame(rows)
+
+# ---------------------------------------------------------------------------
 # SIDEBAR
 # ---------------------------------------------------------------------------
 mag_ok      = st.session_state["df_mag"] is not None
@@ -1479,15 +1522,9 @@ if not mag_ok:
     with _ub_demo:
         st.markdown("<div style='height:28px'></div>", unsafe_allow_html=True)
         if st.button("Demo", use_container_width=True, key="load_demo_btn"):
-            try:
-                demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
-                demo_df = normalize_columns(demo_df)
-                if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
-                    st.session_state["df_mag"] = demo_df
-                    st.session_state["df_mag_name"] = "storico_apr2024.csv [DEMO]"
-                    st.rerun()
-            except Exception as e:
-                st.error(f"Errore: {e}")
+            st.session_state["df_mag"] = get_demo_df()
+            st.session_state["df_mag_name"] = "demo_magazzino.csv [DEMO]"
+            st.rerun()
 else:
     mag_file_sb = None
 
@@ -1590,6 +1627,34 @@ with tab_dash:
         except Exception:
             pass
 
+        # ── Prossimi passi ──────────────────────────────────────────────────
+        st.divider()
+        section("Cosa fare adesso")
+        try:
+            _n_rendere = len(df_mag[
+                (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
+            ])
+            _n_lenti = len(df_mag[
+                (df_mag["Vendute_Ultimi_30_Giorni"] < 3) & (df_mag["Giacenza"] > 0)
+            ])
+            _ps1_color = "#B5362C" if _n_rendere > 20 else "#D97706" if _n_rendere > 0 else "#16A34A"
+            _ps1_icon  = "🔴" if _n_rendere > 20 else "🟡" if _n_rendere > 0 else "🟢"
+            _ps2_color = "#B5362C" if _n_lenti > 30 else "#D97706" if _n_lenti > 10 else "#16A34A"
+            _ps2_icon  = "🔴" if _n_lenti > 30 else "🟡" if _n_lenti > 10 else "🟢"
+            st.markdown(f"""<div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem">
+  <div style="background:#F9F6F2;border-left:4px solid {_ps1_color};border-radius:4px;padding:.75rem 1rem;font-size:.9rem">
+    {_ps1_icon} <strong>Radar</strong> — analizza i <strong>{_n_rendere}</strong> titoli fermi e scopri cosa rendere all'editore
+  </div>
+  <div style="background:#F9F6F2;border-left:4px solid {_ps2_color};border-radius:4px;padding:.75rem 1rem;font-size:.9rem">
+    {_ps2_icon} <strong>Scaffale</strong> — calcola il costo di tenere <strong>{_n_lenti}</strong> titoli lenti sullo scaffale
+  </div>
+  <div style="background:#F9F6F2;border-left:4px solid #2A5FAC;border-radius:4px;padding:.75rem 1rem;font-size:.9rem">
+    🔵 <strong>Simulatore</strong> — stima quante copie ordinare del prossimo titolo
+  </div>
+</div>""", unsafe_allow_html=True)
+        except Exception:
+            pass
+
         # ── Sezione 2: File caricato ────────────────────────────────────────
         st.divider()
         file_stats = get_file_stats(df_mag, frozenset(SCHEMA_MAGAZZINO))
@@ -1607,7 +1672,6 @@ with tab_dash:
             st.caption(f"Colonne mancanti o incomplete: {', '.join(sorted(file_stats['missing_cols']))}")
 
         with st.expander("🔍 Dettagli file", expanded=False):
-            colors = THEME_COLORS
             dc1, dc2 = st.columns(2)
             with dc1:
                 st.caption(f"**Periodo dati:** {file_stats['date_range']}")
@@ -1643,69 +1707,72 @@ with tab_dash:
         _, col_demo, _ = st.columns([1, 2, 1])
         with col_demo:
             if st.button("📊 Prova con i dati demo", use_container_width=True, key="demo_btn_dash"):
-                try:
-                    demo_df = load_csv((pathlib.Path(__file__).parent / "storico_apr2024.csv").read_bytes())
-                    demo_df = normalize_columns(demo_df)
-                    if validate_schema(demo_df, SCHEMA_MAGAZZINO, "Demo"):
-                        st.session_state["df_mag"] = demo_df
-                        st.session_state["df_mag_name"] = "storico_apr2024.csv [DEMO]"
-                        show_toast("Demo caricata! Vai al tab Radar per iniziare.", "success", 4000)
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"Errore nel caricamento demo: {e}")
+                st.session_state["df_mag"] = get_demo_df()
+                st.session_state["df_mag_name"] = "demo_magazzino.csv [DEMO]"
+                st.toast("Demo caricata! Vai al tab Radar per iniziare.", icon="📊")
+                st.rerun()
 
 # ===========================================================================
 # ANALISI RESI — Radar Salva-Cassa
 # ===========================================================================
 with tab_radar:
-    page_header("Radar Salva-Cassa", f"Data di sistema: {DATA_SISTEMA.strftime('%d/%m/%Y')}.")
+    page_header(
+        "Radar Salva-Cassa",
+        f"Individua i titoli da rendere e quelli a rischio di fermo — aggiornato al {DATA_SISTEMA.strftime('%d/%m/%Y')}.",
+    )
     df_mag = st.session_state.get("df_mag")
     if df_mag is None:
+        empty_state(
+            "🔍", "Nessun gestionale caricato",
+            "Carica il tuo CSV di magazzino usando il banner in alto per avviare l'analisi.",
+        )
         with st.expander("📋 Come preparare il file CSV", expanded=False):
             st.caption(
                 "Colonne richieste: `Titolo` · `Autore` · `Editore` · `ISBN` · "
                 "`Data_Fatturazione` (gg/mm/aaaa) · `Giacenza` · "
                 "`Vendute_Ultimi_30_Giorni` · `Prezzo_Copertina` · `Sconto_Libreria`"
             )
+        st.stop()
 
-    with st.expander("⚙️ Parametri analisi", expanded=False):
-        st.markdown("📋 **Adatta le soglie alle condizioni del tuo distributore.**")
-        _c1, _c2, _c3 = st.columns(3)
-
-        help_invenduto = create_help_tooltip(
-            "Invenduto dopo",
-            "Titoli fatturati prima di questo numero di giorni fa sono considerati invenduto scaduto e disponibili per resa.",
-            "90 giorni (3 mesi), 180 giorni (6 mesi), 365 giorni (1 anno)",
-            "182 giorni (6 mesi) — equilibrio tra resa tempestiva e rotazione lenta"
-        )
-        _giorni_invenduto = _c1.number_input(
-            "Invenduto dopo (giorni)", min_value=30, max_value=730, value=182, step=30,
-            help=help_invenduto)
-
-        help_finestra = create_help_tooltip(
-            "Ampiezza finestra resa",
-            "Durata della finestra temporale di resa a partire dalla soglia invenduto. Identifica i titoli in scadenza di resa.",
-            "7 giorni (una settimana), 15 giorni (due settimane), 30 giorni (un mese)",
-            "30 giorni — consente una corretta gestione dei tempi di resa al distributore"
-        )
-        _giorni_finestra  = _c2.number_input(
-            "Ampiezza finestra resa (giorni)", min_value=7, max_value=90, value=30, step=7,
-            help=help_finestra)
-
-        help_rotazione = create_help_tooltip(
-            "Rotazione minima",
-            "Soglia di vendite mensili. Titoli con vendite inferiori sono classificati lenti e candidati a resa.",
-            "1-2 copie/mese (titoli molto lenti), 3-5 copie/mese (titoli lenti), 5+ copie/mese (titoli stabili)",
-            "3 copie/mese — criterio benchmark per identificare titoli in stallo"
-        )
-        _rot_min          = _c3.number_input(
-            "Rotazione minima (copie/mese)", min_value=1, max_value=20, value=int(SOGLIA_ROTAZIONE_MIN), step=1,
-            help=help_rotazione)
-        soglia_inv  = DATA_SISTEMA - timedelta(days=int(_giorni_invenduto))
-        soglia_fs   = soglia_inv
-        soglia_fe   = soglia_fs + timedelta(days=int(_giorni_finestra))
-        rot_min_ui  = int(_rot_min)
-
+    if df_mag is not None:
+        with st.expander("⚙️ Parametri analisi", expanded=False):
+            st.markdown("📋 **Adatta le soglie alle condizioni del tuo distributore.**")
+            _c1, _c2, _c3 = st.columns(3)
+    
+            help_invenduto = create_help_tooltip(
+                "Invenduto dopo",
+                "Titoli fatturati prima di questo numero di giorni fa sono considerati invenduto scaduto e disponibili per resa.",
+                "90 giorni (3 mesi), 180 giorni (6 mesi), 365 giorni (1 anno)",
+                "182 giorni (6 mesi) — equilibrio tra resa tempestiva e rotazione lenta"
+            )
+            _giorni_invenduto = _c1.number_input(
+                "Invenduto dopo (giorni)", min_value=30, max_value=730, value=182, step=30,
+                help=help_invenduto)
+    
+            help_finestra = create_help_tooltip(
+                "Ampiezza finestra resa",
+                "Durata della finestra temporale di resa a partire dalla soglia invenduto. Identifica i titoli in scadenza di resa.",
+                "7 giorni (una settimana), 15 giorni (due settimane), 30 giorni (un mese)",
+                "30 giorni — consente una corretta gestione dei tempi di resa al distributore"
+            )
+            _giorni_finestra  = _c2.number_input(
+                "Ampiezza finestra resa (giorni)", min_value=7, max_value=90, value=30, step=7,
+                help=help_finestra)
+    
+            help_rotazione = create_help_tooltip(
+                "Rotazione minima",
+                "Soglia di vendite mensili. Titoli con vendite inferiori sono classificati lenti e candidati a resa.",
+                "1-2 copie/mese (titoli molto lenti), 3-5 copie/mese (titoli lenti), 5+ copie/mese (titoli stabili)",
+                "3 copie/mese — criterio benchmark per identificare titoli in stallo"
+            )
+            _rot_min          = _c3.number_input(
+                "Rotazione minima (copie/mese)", min_value=1, max_value=20, value=int(SOGLIA_ROTAZIONE_MIN), step=1,
+                help=help_rotazione)
+            soglia_inv  = DATA_SISTEMA - timedelta(days=int(_giorni_invenduto))
+            soglia_fs   = soglia_inv
+            soglia_fe   = soglia_fs + timedelta(days=int(_giorni_finestra))
+            rot_min_ui  = int(_rot_min)
+    
     if df_mag is not None:
         with st.spinner("🔄 Analisi magazzino in corso…"):
             seg = processa_magazzino(df_mag, soglia_inv, soglia_fs, soglia_fe, rot_min_ui)
@@ -1816,6 +1883,7 @@ with tab_radar:
         totale_recuperabile = df_rendere["Valore_Recuperabile"].sum()
 
         st.divider()
+        section("Riepilogo analisi")
         c1, c2, c3 = st.columns(3)
         with c1:
             metric_card("Liquidità recuperabile", fmt_euro(totale_recuperabile),
@@ -1830,198 +1898,6 @@ with tab_radar:
             metric_card("In rotazione — da tenere", str(len(df_tenere)),
                         "positive" if len(df_tenere) > 0 else "neutral")
         st.divider()
-
-        # ── Da rendere ──────────────────────────────────────────────────────
-        if not df_filtered.empty:
-            st.markdown('<span class="urgency-bar">Azione richiesta</span>', unsafe_allow_html=True)
-        section("Da rendere oggi")
-        colors = THEME_COLORS
-        st.markdown(
-            f"<div style=\"color: {colors['text_secondary']}; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;\">"
-            f"Fatturati tra <strong>{soglia_fs.strftime('%d/%m/%Y')}</strong> e <strong>{soglia_fe.strftime('%d/%m/%Y')}</strong><br>"
-            f"Vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> copie/mese · giacenza &gt; 0"
-            f"</div>",
-            unsafe_allow_html=True
-        )
-        if df_filtered.empty:
-            empty_state("✓", "Nessun titolo da rendere",
-                        "Non ci sono titoli in scadenza di resa per questa finestra (o nessuno corrisponde ai filtri selezionati).")
-        else:
-            cols_r = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
-                                   "Giacenza","Vendute_Ultimi_30_Giorni",
-                                   "Prezzo_Copertina","Sconto_Libreria","Valore_Recuperabile"]
-                      if c in df_filtered.columns]
-            df_rendere_sorted = df_filtered[cols_r].sort_values("Valore_Recuperabile", ascending=False).copy()
-            if "Data_Fatturazione" in df_rendere_sorted.columns:
-                df_rendere_sorted["Data_Fatturazione"] = df_rendere_sorted["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
-            st.dataframe(df_rendere_sorted, use_container_width=True, hide_index=True,
-                         height=max(150, min(400, 45 + len(df_rendere_sorted) * 35)))
-
-            # Export buttons
-            col_csv, col_excel = st.columns(2)
-            with col_csv:
-                _clicked_rendere = st.download_button(
-                    label="📥 Esporta CSV",
-                    data=sanitize_csv(df_rendere_sorted).to_csv(index=False).encode("utf-8-sig"),
-                    file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
-                    mime="text/csv",
-                    use_container_width=True
-                )
-            with col_excel:
-                excel_data = export_to_excel_bytes({"Da rendere": df_rendere_sorted})
-                st.download_button(
-                    label="📊 Esporta Excel",
-                    data=excel_data,
-                    file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    use_container_width=True
-                )
-            if _clicked_rendere:
-                save_decision_log(
-                    action_type="resa",
-                    titoli=df_rendere_sorted["Titolo"].tolist() if "Titolo" in df_rendere_sorted.columns else [],
-                    n_copie=int(df_rendere_sorted["Giacenza"].sum()) if "Giacenza" in df_rendere_sorted.columns else 0,
-                    valore=float(df_rendere_sorted["Valore_Recuperabile"].sum()) if "Valore_Recuperabile" in df_rendere_sorted.columns else 0.0,
-                )
-
-            # ── Raggruppamento per editore ───────────────────────────────
-            with st.expander("📊 Da rendere per editore — per preparare le distinte di resa"):
-                if "Editore" in df_rendere.columns:
-                    grp = (
-                        df_rendere
-                        .groupby("Editore", dropna=False)
-                        .agg(
-                            Titoli   =("Titolo",             "count"),
-                            Copie    =("Giacenza",           "sum"),
-                            Valore   =("Valore_Recuperabile","sum"),
-                        )
-                        .sort_values("Valore", ascending=False)
-                        .reset_index()
-                    )
-                    grp["Valore"] = grp["Valore"].apply(fmt_euro)
-                    grp = grp.rename(columns={"Valore": "Valore recuperabile"})
-                    st.dataframe(grp, use_container_width=True, hide_index=True)
-                    st.caption(
-                        f"{len(grp)} editori/distributori · "
-                        f"{int(df_rendere['Giacenza'].sum())} copie totali"
-                    )
-                else:
-                    st.info("Colonna 'Editore' non presente nel file.")
-
-        st.divider()
-
-        # ── Da tenere ────────────────────────────────────────────────────────
-        section("Da tenere — in rotazione")
-        st.markdown(
-            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;">'
-            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong><br>'
-            f'Vendite ultime 30 gg ≥ <strong>{rot_min_ui}</strong> copie/mese'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        if df_tenere.empty:
-            empty_state("—", "Nessun titolo in rotazione attiva", "")
-        else:
-            cols_t = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
-                                   "Giacenza","Vendute_Ultimi_30_Giorni","Prezzo_Copertina"]
-                      if c in df_tenere.columns]
-            df_tenere_disp = df_tenere[cols_t].sort_values("Vendute_Ultimi_30_Giorni", ascending=False).copy()
-            if "Data_Fatturazione" in df_tenere_disp.columns:
-                df_tenere_disp["Data_Fatturazione"] = df_tenere_disp["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
-            st.dataframe(df_tenere_disp, use_container_width=True, hide_index=True,
-                         height=max(150, min(400, 45 + len(df_tenere_disp) * 35)))
-        st.divider()
-
-        # ── Invenduto scaduto ─────────────────────────────────────────────
-        section("Invenduto scaduto")
-        st.markdown(
-            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;">'
-            f'Fatturati prima del <strong>{soglia_inv.strftime("%d/%m/%Y")}</strong><br>'
-            f'Fuori dalla finestra di resa'
-            f'</div>',
-            unsafe_allow_html=True
-        )
-        if df_scaduto.empty:
-            empty_state("✓", "Nessun invenduto scaduto",
-                        "Tutti i titoli rientrano nelle finestre temporali attive.")
-        else:
-            cols_s = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
-                                   "Giacenza","Vendute_Ultimi_30_Giorni","Prezzo_Copertina"]
-                      if c in df_scaduto.columns]
-            df_scaduto_sorted = df_scaduto[cols_s].sort_values("Data_Fatturazione").copy()
-            if "Data_Fatturazione" in df_scaduto_sorted.columns:
-                df_scaduto_sorted["Data_Fatturazione"] = df_scaduto_sorted["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
-            st.dataframe(df_scaduto_sorted, use_container_width=True, hide_index=True,
-                         height=max(150, min(400, 45 + len(df_scaduto_sorted) * 35)))
-
-            # Avviso libri scaduti ma ancora in buona rotazione — non vanno svuotati
-            df_scaduto_vendono = df_scaduto[df_scaduto["Vendute_Ultimi_30_Giorni"] >= rot_min_ui]
-            if not df_scaduto_vendono.empty:
-                titoli_list = df_scaduto_vendono["Titolo"].tolist()
-                n_titoli = len(titoli_list)
-
-                # Mostra solo i primi 10 titoli in anteprima
-                preview_limit = 10
-                titoli_preview = titoli_list[:preview_limit]
-                titoli_preview_str = ", ".join(f"«{t}»" for t in titoli_preview)
-
-                if n_titoli <= preview_limit:
-                    st.info(
-                        f"⚠️ **{n_titoli} titolo/i scaduti vendono ancora bene "
-                        f"(≥ {rot_min_ui} copie/mese):** {titoli_preview_str}. "
-                        "Fuori dalla finestra di resa, ma conviene tenerli in vetrina."
-                    )
-                else:
-                    st.info(
-                        f"⚠️ **{n_titoli} titolo/i scaduti vendono ancora bene "
-                        f"(≥ {rot_min_ui} copie/mese)** — Mostrando i primi {preview_limit} di {n_titoli}:"
-                    )
-                    st.markdown(f"**Titoli:** {titoli_preview_str}")
-
-                    with st.expander(f"📖 Visualizza tutti i {n_titoli} titoli"):
-                        # Pagina i titoli in gruppi di 50
-                        per_page = 50
-                        n_pages = (n_titoli + per_page - 1) // per_page
-
-                        if n_pages <= 3:
-                            # Se pochi titoli, mostrali tutti subito
-                            all_titoli_str = ", ".join(f"«{t}»" for t in titoli_list)
-                            st.markdown(all_titoli_str)
-                        else:
-                            # Se molti, offri selezione pagina
-                            page = st.selectbox(
-                                "Pagina",
-                                options=range(1, n_pages + 1),
-                                key="scaduti_vendono_page"
-                            )
-                            start_idx = (page - 1) * per_page
-                            end_idx = min(start_idx + per_page, n_titoli)
-                            page_titoli = titoli_list[start_idx:end_idx]
-                            page_titoli_str = ", ".join(f"«{t}»" for t in page_titoli)
-                            st.markdown(page_titoli_str)
-
-                    st.caption("💡 Questi titoli sono fuori dalla finestra di resa, ma vendono ancora bene: conviene tenerli in vetrina.")
-
-            _wc1, _wc2 = st.columns([2, 1])
-            with _wc1:
-                st.warning(
-                    f"{len(df_scaduto)} titolo/i fuori dalla finestra di resa. "
-                    "Valuta promozioni mirate o contatti con il distributore."
-                )
-            with _wc2:
-                _clicked_scaduto = st.download_button(
-                    label="📥 Esporta invenduto (CSV)",
-                    data=sanitize_csv(df_scaduto_sorted).to_csv(index=False).encode("utf-8-sig"),
-                    file_name=f"invenduto_scaduto_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
-                    mime="text/csv",
-                )
-                if _clicked_scaduto:
-                    save_decision_log(
-                        action_type="analisi_invenduto",
-                        titoli=df_scaduto_sorted["Titolo"].tolist() if "Titolo" in df_scaduto_sorted.columns else [],
-                        n_copie=int(df_scaduto_sorted["Giacenza"].sum()) if "Giacenza" in df_scaduto_sorted.columns else 0,
-                        valore=float(df_scaduto_sorted["Prezzo_Copertina"].sum()) if "Prezzo_Copertina" in df_scaduto_sorted.columns else 0.0,
-                    )
         # ── Piano d'azione ────────────────────────────────────────────────
         st.divider()
         with st.expander("📊 Piano d'azione — priorità per cassa", expanded=True):
@@ -2159,6 +2035,201 @@ with tab_radar:
             else:
                 st.info("Nessun titolo con giacenza attiva da analizzare.")
 
+
+        # ── Da rendere ──────────────────────────────────────────────────────
+        if not df_filtered.empty:
+            st.markdown('<span class="urgency-bar">Azione richiesta</span>', unsafe_allow_html=True)
+        section("Da rendere oggi")
+        colors = THEME_COLORS
+        st.markdown(
+            f"<div style=\"color: {colors['text_secondary']}; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;\">"
+            f"Fatturati tra <strong>{soglia_fs.strftime('%d/%m/%Y')}</strong> e <strong>{soglia_fe.strftime('%d/%m/%Y')}</strong><br>"
+            f"Vendite ultime 30 gg &lt; <strong>{rot_min_ui}</strong> copie/mese · giacenza &gt; 0"
+            f"</div>",
+            unsafe_allow_html=True
+        )
+        if df_filtered.empty:
+            empty_state("✓", "Nessun titolo da rendere",
+                        "Non ci sono titoli in scadenza di resa per questa finestra (o nessuno corrisponde ai filtri selezionati).")
+        else:
+            cols_r = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
+                                   "Giacenza","Vendute_Ultimi_30_Giorni",
+                                   "Prezzo_Copertina","Sconto_Libreria","Valore_Recuperabile"]
+                      if c in df_filtered.columns]
+            df_rendere_sorted = df_filtered[cols_r].sort_values("Valore_Recuperabile", ascending=False).copy()
+            if "Data_Fatturazione" in df_rendere_sorted.columns:
+                df_rendere_sorted["Data_Fatturazione"] = df_rendere_sorted["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
+            st.dataframe(df_rendere_sorted, use_container_width=True, hide_index=True,
+                         height=max(150, min(400, 45 + len(df_rendere_sorted) * 35)))
+
+            # Export buttons
+            col_csv, col_excel = st.columns(2)
+            with col_csv:
+                _clicked_rendere = st.download_button(
+                    label="📥 Esporta CSV",
+                    data=sanitize_csv(df_rendere_sorted).to_csv(index=False).encode("utf-8-sig"),
+                    file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+            with col_excel:
+                excel_data = export_to_excel_bytes({"Da rendere": df_rendere_sorted})
+                st.download_button(
+                    label="📊 Esporta Excel",
+                    data=excel_data,
+                    file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    use_container_width=True
+                )
+            if _clicked_rendere:
+                st.toast("File scaricato!", icon="✅")
+                save_decision_log(
+                    action_type="resa",
+                    titoli=df_rendere_sorted["Titolo"].tolist() if "Titolo" in df_rendere_sorted.columns else [],
+                    n_copie=int(df_rendere_sorted["Giacenza"].sum()) if "Giacenza" in df_rendere_sorted.columns else 0,
+                    valore=float(df_rendere_sorted["Valore_Recuperabile"].sum()) if "Valore_Recuperabile" in df_rendere_sorted.columns else 0.0,
+                )
+
+            # ── Raggruppamento per editore ───────────────────────────────
+            with st.expander("📊 Da rendere per editore — per preparare le distinte di resa"):
+                if "Editore" in df_rendere.columns:
+                    grp = (
+                        df_rendere
+                        .groupby("Editore", dropna=False)
+                        .agg(
+                            Titoli   =("Titolo",             "count"),
+                            Copie    =("Giacenza",           "sum"),
+                            Valore   =("Valore_Recuperabile","sum"),
+                        )
+                        .sort_values("Valore", ascending=False)
+                        .reset_index()
+                    )
+                    grp["Valore"] = grp["Valore"].apply(fmt_euro)
+                    grp = grp.rename(columns={"Valore": "Valore recuperabile"})
+                    st.dataframe(grp, use_container_width=True, hide_index=True)
+                    st.caption(
+                        f"{len(grp)} editori/distributori · "
+                        f"{int(df_rendere['Giacenza'].sum())} copie totali"
+                    )
+                else:
+                    st.info("Colonna 'Editore' non presente nel file.")
+
+        st.divider()
+
+        # ── Da tenere ────────────────────────────────────────────────────────
+        section("Da tenere — in rotazione")
+        st.markdown(
+            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;">'
+            f'Fatturati tra <strong>{soglia_fs.strftime("%d/%m/%Y")}</strong> e <strong>{soglia_fe.strftime("%d/%m/%Y")}</strong><br>'
+            f'Vendite ultime 30 gg ≥ <strong>{rot_min_ui}</strong> copie/mese'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if df_tenere.empty:
+            empty_state("⏸", "Nessun titolo in rotazione attiva",
+                    "Nessun libro nella finestra temporale ha vendite sufficienti.")
+        else:
+            cols_t = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
+                                   "Giacenza","Vendute_Ultimi_30_Giorni","Prezzo_Copertina"]
+                      if c in df_tenere.columns]
+            df_tenere_disp = df_tenere[cols_t].sort_values("Vendute_Ultimi_30_Giorni", ascending=False).copy()
+            if "Data_Fatturazione" in df_tenere_disp.columns:
+                df_tenere_disp["Data_Fatturazione"] = df_tenere_disp["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
+            st.dataframe(df_tenere_disp, use_container_width=True, hide_index=True,
+                         height=max(150, min(400, 45 + len(df_tenere_disp) * 35)))
+        st.divider()
+
+        # ── Invenduto scaduto ─────────────────────────────────────────────
+        section("Invenduto scaduto")
+        st.markdown(
+            f'<div style="color: #5C5852; font-size: 13px; line-height: 1.8; padding: 8px 0; margin: 4px 0 15px 0;">'
+            f'Fatturati prima del <strong>{soglia_inv.strftime("%d/%m/%Y")}</strong><br>'
+            f'Fuori dalla finestra di resa'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+        if df_scaduto.empty:
+            empty_state("✓", "Nessun invenduto scaduto",
+                        "Tutti i titoli rientrano nelle finestre temporali attive.")
+        else:
+            cols_s = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
+                                   "Giacenza","Vendute_Ultimi_30_Giorni","Prezzo_Copertina"]
+                      if c in df_scaduto.columns]
+            df_scaduto_sorted = df_scaduto[cols_s].sort_values("Data_Fatturazione").copy()
+            if "Data_Fatturazione" in df_scaduto_sorted.columns:
+                df_scaduto_sorted["Data_Fatturazione"] = df_scaduto_sorted["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
+            st.dataframe(df_scaduto_sorted, use_container_width=True, hide_index=True,
+                         height=max(150, min(400, 45 + len(df_scaduto_sorted) * 35)))
+
+            # Avviso libri scaduti ma ancora in buona rotazione — non vanno svuotati
+            df_scaduto_vendono = df_scaduto[df_scaduto["Vendute_Ultimi_30_Giorni"] >= rot_min_ui]
+            if not df_scaduto_vendono.empty:
+                titoli_list = df_scaduto_vendono["Titolo"].tolist()
+                n_titoli = len(titoli_list)
+
+                # Mostra solo i primi 10 titoli in anteprima
+                preview_limit = 10
+                titoli_preview = titoli_list[:preview_limit]
+                titoli_preview_str = ", ".join(f"«{t}»" for t in titoli_preview)
+
+                if n_titoli <= preview_limit:
+                    st.info(
+                        f"⚠️ **{n_titoli} titolo/i scaduti vendono ancora bene "
+                        f"(≥ {rot_min_ui} copie/mese):** {titoli_preview_str}. "
+                        "Fuori dalla finestra di resa, ma conviene tenerli in vetrina."
+                    )
+                else:
+                    st.info(
+                        f"⚠️ **{n_titoli} titolo/i scaduti vendono ancora bene "
+                        f"(≥ {rot_min_ui} copie/mese)** — Mostrando i primi {preview_limit} di {n_titoli}:"
+                    )
+                    st.markdown(f"**Titoli:** {titoli_preview_str}")
+
+                    with st.expander(f"📖 Visualizza tutti i {n_titoli} titoli"):
+                        # Pagina i titoli in gruppi di 50
+                        per_page = 50
+                        n_pages = (n_titoli + per_page - 1) // per_page
+
+                        if n_pages <= 3:
+                            # Se pochi titoli, mostrali tutti subito
+                            all_titoli_str = ", ".join(f"«{t}»" for t in titoli_list)
+                            st.markdown(all_titoli_str)
+                        else:
+                            # Se molti, offri selezione pagina
+                            page = st.selectbox(
+                                "Pagina",
+                                options=range(1, n_pages + 1),
+                                key="scaduti_vendono_page"
+                            )
+                            start_idx = (page - 1) * per_page
+                            end_idx = min(start_idx + per_page, n_titoli)
+                            page_titoli = titoli_list[start_idx:end_idx]
+                            page_titoli_str = ", ".join(f"«{t}»" for t in page_titoli)
+                            st.markdown(page_titoli_str)
+
+                    st.caption("💡 Questi titoli sono fuori dalla finestra di resa, ma vendono ancora bene: conviene tenerli in vetrina.")
+
+            _wc1, _wc2 = st.columns([2, 1])
+            with _wc1:
+                st.warning(
+                    f"{len(df_scaduto)} titolo/i fuori dalla finestra di resa. "
+                    "Valuta promozioni mirate o contatti con il distributore."
+                )
+            with _wc2:
+                _clicked_scaduto = st.download_button(
+                    label="📥 Esporta invenduto (CSV)",
+                    data=sanitize_csv(df_scaduto_sorted).to_csv(index=False).encode("utf-8-sig"),
+                    file_name=f"invenduto_scaduto_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
+                    mime="text/csv",
+                )
+                if _clicked_scaduto:
+                    st.toast("File scaricato!", icon="✅")
+                    save_decision_log(
+                        action_type="analisi_invenduto",
+                        titoli=df_scaduto_sorted["Titolo"].tolist() if "Titolo" in df_scaduto_sorted.columns else [],
+                        n_copie=int(df_scaduto_sorted["Giacenza"].sum()) if "Giacenza" in df_scaduto_sorted.columns else 0,
+                        valore=float(df_scaduto_sorted["Prezzo_Copertina"].sum()) if "Prezzo_Copertina" in df_scaduto_sorted.columns else 0.0,
+                    )
         # ── Storico esportazioni ──────────────────────────────────────────────
         st.divider()
         with st.expander("🗂️ Storico esportazioni", expanded=False):
@@ -2208,7 +2279,7 @@ with tab_radar:
                 )
 
     else:
-        empty_state("", "Pronto per analizzare il magazzino",
+        empty_state("📦", "Pronto per analizzare il magazzino",
                     "Carica il gestionale usando il banner in cima alla pagina oppure premi Demo per usare dati di esempio.")
         st.divider()
         section("CSV di esempio")
@@ -2356,6 +2427,11 @@ with tab_scaffale:
         # ── Tabella principale ───────────────────────────────────────
         st.divider()
         section("📋 Analisi per titolo")
+        st.caption(
+            "🟢 Margine copre i costi — tieni il libro  ·  "
+            "🟡 Margine ok, ma ci vogliono oltre 6 mesi per vendere  ·  "
+            "🔴 Il costo scaffale supera il margine atteso — valuta la resa"
+        )
 
         df_display = df[["Segnale", "Titolo", "Autore", "Editore", "Giacenza",
                          "Giorni_in_magazzino", "Vendute_Ultimi_30_Giorni",
@@ -2411,24 +2487,15 @@ with tab_scaffale:
         # ── Export ───────────────────────────────────────────────────
         st.divider()
         csv_export = sanitize_csv(df_display).to_csv(index=False).encode("utf-8")
-        st.download_button(
+        if st.download_button(
             "📥 Esporta analisi costi scaffale",
             data=csv_export,
             file_name="costo_scaffale_analisi.csv",
             mime="text/csv",
             use_container_width=True
-        )
+        ):
+            st.toast("File scaricato!", icon="✅")
 
-        # ── Legenda ──────────────────────────────────────────────────
-        st.markdown("""
-        <div style="padding: 12px; background: #E8F4F8; border-left: 4px solid #0284C7; border-radius: 4px; color: #0C4A6E; margin-top: 12px;">
-        <strong>Come leggere i risultati:</strong><br>
-        🟢 <strong>Verde</strong> — Il margine copre i costi di scaffale. Tieni il libro.<br>
-        🟡 <strong>Giallo</strong> — Il margine copre i costi, ma ci vorranno oltre 6 mesi per vendere tutto.<br>
-        🔴 <strong>Rosso</strong> — Il costo di scaffale supera il margine atteso. Valuta la resa.<br><br>
-        <em>Il "Valore netto" è il margine atteso meno il costo futuro di tenere il libro sullo scaffale fino alla vendita.</em>
-        </div>
-        """, unsafe_allow_html=True)
 
 # ===========================================================================
 # CALCOLATORE MARGINE ORDINE
@@ -2483,44 +2550,60 @@ with tab_calc:
                              value=st.session_state["calc_resa_pct"], step=5, key="calc_resa_pct", help=help_resa)
 
         st.divider()
-        section("Costi fissi mensili")
-        st.caption("Inserisci i costi fissi per calcolare il break-even reale della libreria.")
-
-        help_affitto = create_help_tooltip(
-            "Affitto",
-            "Canone mensile di affitto dei locali della libreria.",
-            "500 € (piccolo spazio), 1500 € (spazio medio), 3000 € (grande negozio)",
-            "Inserisci il valore reale per la tua libreria"
+        _costi_totali_preview = (
+            st.session_state.get("calc_affitto", 0.0)
+            + st.session_state.get("calc_utenze", 0.0)
+            + st.session_state.get("calc_personale", 0.0)
+            + st.session_state.get("calc_altri", 0.0)
         )
-        affitto   = st.number_input("Affitto (€/mese)", min_value=0.0,
-                                    value=st.session_state["calc_affitto"],   step=50.0,  format="%.0f", key="calc_affitto", help=help_affitto)
-
-        help_utenze = create_help_tooltip(
-            "Utenze",
-            "Costi mensili di elettricità, gas, acqua e internet.",
-            "100 € (piccolo), 300 € (medio), 500 € (grande con riscaldamento)",
-            "Calcola dalla media annuale"
+        _exp_label = (
+            f"💼 Costi fissi mensili — {fmt_euro(_costi_totali_preview)}/mese"
+            if _costi_totali_preview > 0
+            else "💼 Costi fissi mensili — non impostati"
         )
-        utenze    = st.number_input("Utenze (€/mese)", min_value=0.0,
-                                    value=st.session_state["calc_utenze"],    step=10.0,  format="%.0f", key="calc_utenze", help=help_utenze)
+        with st.expander(_exp_label, expanded=False):
+            st.caption("Necessari per calcolare quanti ordini servono a coprire i costi della libreria.")
 
-        help_personale = create_help_tooltip(
-            "Personale",
-            "Costo fisso mensile per retribuzione del personale (stipendi netti).",
-            "1000 € (proprietario part-time), 2500 € (un dipendente), 5000 € (due dipendenti)",
-            "Non includere contributi — solo il netto"
-        )
-        personale = st.number_input("Personale (€/mese)", min_value=0.0,
-                                    value=st.session_state["calc_personale"], step=50.0,  format="%.0f", key="calc_personale", help=help_personale)
+            help_affitto = create_help_tooltip(
+                "Affitto",
+                "Canone mensile di affitto dei locali della libreria.",
+                "500 € (piccolo spazio), 1500 € (spazio medio), 3000 € (grande negozio)",
+                "Inserisci il valore reale per la tua libreria"
+            )
+            affitto   = st.number_input("Affitto (€/mese)", min_value=0.0,
+                                        value=st.session_state["calc_affitto"],   step=50.0,  format="%.0f", key="calc_affitto", help=help_affitto)
 
-        help_altri = create_help_tooltip(
-            "Altri costi",
-            "Costi fissi rimanenti: assicurazioni, manutenzione, forniture, tasse, software.",
-            "200 € (base minima), 500 € (copertura completa)",
-            "Sommare: assicurazione (~50€) + manutenzione (~30€) + forniture (~50€) + altri"
-        )
-        altri     = st.number_input("Altri costi fissi (€/mese)", min_value=0.0,
-                                    value=st.session_state["calc_altri"],     step=10.0,  format="%.0f", key="calc_altri", help=help_altri)
+            help_utenze = create_help_tooltip(
+                "Utenze",
+                "Costi mensili di elettricità, gas, acqua e internet.",
+                "100 € (piccolo), 300 € (medio), 500 € (grande con riscaldamento)",
+                "Calcola dalla media annuale"
+            )
+            utenze    = st.number_input("Utenze (€/mese)", min_value=0.0,
+                                        value=st.session_state["calc_utenze"],    step=10.0,  format="%.0f", key="calc_utenze", help=help_utenze)
+
+            help_personale = create_help_tooltip(
+                "Personale",
+                "Costo fisso mensile per retribuzione del personale (stipendi netti).",
+                "1000 € (proprietario part-time), 2500 € (un dipendente), 5000 € (due dipendenti)",
+                "Non includere contributi — solo il netto"
+            )
+            personale = st.number_input("Personale (€/mese)", min_value=0.0,
+                                        value=st.session_state["calc_personale"], step=50.0,  format="%.0f", key="calc_personale", help=help_personale)
+
+            help_altri = create_help_tooltip(
+                "Altri costi",
+                "Costi fissi rimanenti: assicurazioni, manutenzione, forniture, tasse, software.",
+                "200 € (base minima), 500 € (copertura completa)",
+                "Sommare: assicurazione (~50€) + manutenzione (~30€) + forniture (~50€) + altri"
+            )
+            altri     = st.number_input("Altri costi fissi (€/mese)", min_value=0.0,
+                                        value=st.session_state["calc_altri"],     step=10.0,  format="%.0f", key="calc_altri", help=help_altri)
+
+        affitto   = st.session_state.get("calc_affitto",   0.0)
+        utenze    = st.session_state.get("calc_utenze",    0.0)
+        personale = st.session_state.get("calc_personale", 0.0)
+        altri     = st.session_state.get("calc_altri",     0.0)
         costi_fissi_totali = affitto + utenze + personale + altri
 
     with col_results:
@@ -2546,6 +2629,14 @@ with tab_calc:
 
         tone_m  = "positive" if margine_pct_netto >= 25 else ("negative" if margine_pct_netto < 15 else "warning")
         tone_be = "positive" if be_pct_vendibili <= 70 else ("warning" if be_pct_vendibili <= 90 else "negative")
+
+        if be_ordine_pct > (100 - resa_pct):
+            st.error("⛔ Con la resa stimata non raggiungi il break-even sull'ordine. "
+                     "Riduci la quantità o rinegozia lo sconto.")
+        elif margine_pct_netto < 20:
+            st.warning("⚠️ Margine sotto il 20% — valuta se l'ordine è strategicamente giustificato.")
+        else:
+            st.success("✅ L'ordine è sostenibile.")
 
         r1, r2 = st.columns(2)
         with r1: metric_card("Margine netto ordine", fmt_euro(margine_netto),
@@ -2588,20 +2679,13 @@ with tab_calc:
         st.dataframe(df_riepilogo, use_container_width=True, hide_index=True, height=350)
 
         titolo_label = st.session_state.get("calc_titolo", "").strip() or "ordine"
-        st.download_button(
+        if st.download_button(
             label="📥 Esporta simulazione (CSV)",
             data=sanitize_csv(df_riepilogo).to_csv(index=False).encode("utf-8-sig"),
             file_name=f"margine_{titolo_label[:30].replace(' ','_')}_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
             mime="text/csv",
-        )
-
-        if be_ordine_pct > (100 - resa_pct):
-            st.error("Con la resa stimata non raggiungi il break-even sull'ordine. "
-                     "Riduci la quantità o rinegozia lo sconto.")
-        elif margine_pct_netto < 20:
-            st.warning("Margine sotto il 20% — valuta se l'ordine è strategicamente giustificato.")
-        else:
-            st.success("L'ordine è sostenibile.")
+        ):
+            st.toast("Simulazione esportata!", icon="✅")
 
         st.divider()
 
@@ -2810,8 +2894,9 @@ with tab_usato:
             # ── Azioni ──────────────────────────────────────────────────────
             c_exp, c_del = st.columns([2, 1])
             with c_exp:
-                st.download_button("📥 Esporta CSV", sanitize_csv(df_inv).to_csv(index=False).encode("utf-8-sig"),
-                                   "inventario_usato.csv", "text/csv", use_container_width=True)
+                if st.download_button("📥 Esporta CSV", sanitize_csv(df_inv).to_csv(index=False).encode("utf-8-sig"),
+                                   "inventario_usato.csv", "text/csv", use_container_width=True):
+                    st.toast("Inventario esportato!", icon="✅")
             with c_del:
                 if not st.session_state["svuota_confirm"]:
                     if st.button("Svuota tutto", use_container_width=True):
@@ -2960,6 +3045,7 @@ with tab_storico:
         "Confronta più snapshot del gestionale per leggere l'evoluzione del magazzino nel tempo.",
     )
 
+    st.caption("Carica 2 o più CSV — uno per ogni periodo che vuoi confrontare (es. gennaio, aprile, ottobre)")
     storico_files_sb = st.file_uploader(
         "Snapshot storici", type="csv",
         accept_multiple_files=True, key="storico_up",
@@ -3654,8 +3740,15 @@ with tab_sim:
     )
 
     # ── Dati di riferimento ─────────────────────────────────────────────────
-    # Usa df_mag già caricato nel Radar Salva-Cassa se disponibile
     df_sim_ref = st.session_state.get("df_mag")
+
+    if df_sim_ref is None:
+        empty_state(
+            "📊", "Nessun gestionale caricato",
+            "Carica il tuo CSV di magazzino usando il banner in alto — "
+            "il simulatore lo userà come base di stima.",
+        )
+        st.stop()
 
     # ── Form input ──────────────────────────────────────────────────────────
     section("Parametri del nuovo titolo")
@@ -3710,238 +3803,230 @@ with tab_sim:
 
     st.divider()
 
-    # ── Guard: nessun gestionale caricato ───────────────────────────────────
-    if df_sim_ref is None:
-        empty_state(
-            "📊", "Nessun gestionale caricato",
-            "Vai al **Radar Salva-Cassa** nella barra di navigazione e carica il tuo "
-            "CSV di magazzino — il simulatore lo userà come base di stima.",
-        )
+    # ── Costruzione peer group ──────────────────────────────────────────────
+    # Minimo titoli perché la stima sia statisticamente utile
+    MIN_PEERS = 3
+
+    # Solo titoli con giacenza > 0 — gli altri non hanno dati di vendita
+    df_pool = df_sim_ref[df_sim_ref["Giacenza"] > 0].copy()
+
+    if df_pool.empty:
+        st.warning("Il gestionale non contiene titoli con giacenza > 0. Impossibile stimare.")
     else:
-        # ── Costruzione peer group ──────────────────────────────────────────
-        # Minimo titoli perché la stima sia statisticamente utile
-        MIN_PEERS = 3
-
-        # Solo titoli con giacenza > 0 — gli altri non hanno dati di vendita
-        df_pool = df_sim_ref[df_sim_ref["Giacenza"] > 0].copy()
-
-        if df_pool.empty:
-            st.warning("Il gestionale non contiene titoli con giacenza > 0. Impossibile stimare.")
+        # 1. Filtra per editore (case-insensitive, match parziale)
+        editore_q = sim_editore.strip().lower()
+        if editore_q and "Editore" in df_pool.columns:
+            df_pub = df_pool[
+                df_pool["Editore"].str.lower().str.contains(editore_q, na=False)
+            ].copy()
         else:
-            # 1. Filtra per editore (case-insensitive, match parziale)
-            editore_q = sim_editore.strip().lower()
-            if editore_q and "Editore" in df_pool.columns:
-                df_pub = df_pool[
-                    df_pool["Editore"].str.lower().str.contains(editore_q, na=False)
-                ].copy()
-            else:
-                df_pub = df_pool.copy()
+            df_pub = df_pool.copy()
 
-            fallback_note = ""
-            if editore_q and len(df_pub) < MIN_PEERS:
-                fallback_note = (
-                    f"Solo {len(df_pub)} titol{'o' if len(df_pub) == 1 else 'i'} trovati "
-                    f"per **{sim_editore}** con giacenza > 0. "
-                    "La stima è allargata a tutti gli editori per maggiore robustezza statistica."
-                )
-                df_pub = df_pool.copy()
+        fallback_note = ""
+        if editore_q and len(df_pub) < MIN_PEERS:
+            fallback_note = (
+                f"Solo {len(df_pub)} titol{'o' if len(df_pub) == 1 else 'i'} trovati "
+                f"per **{sim_editore}** con giacenza > 0. "
+                "La stima è allargata a tutti gli editori per maggiore robustezza statistica."
+            )
+            df_pub = df_pool.copy()
 
-            # 2. Filtro per fascia di prezzo (±40%) — migliora la comparabilità
-            if sim_prezzo > 0 and "Prezzo_Copertina" in df_pub.columns:
-                price_lo = sim_prezzo * 0.60
-                price_hi = sim_prezzo * 1.40
-                df_price = df_pub[df_pub["Prezzo_Copertina"].between(price_lo, price_hi)].copy()
-                if len(df_price) >= MIN_PEERS:
-                    df_pub = df_price
+        # 2. Filtro per fascia di prezzo (±40%) — migliora la comparabilità
+        if sim_prezzo > 0 and "Prezzo_Copertina" in df_pub.columns:
+            price_lo = sim_prezzo * 0.60
+            price_hi = sim_prezzo * 1.40
+            df_price = df_pub[df_pub["Prezzo_Copertina"].between(price_lo, price_hi)].copy()
+            if len(df_price) >= MIN_PEERS:
+                df_pub = df_price
 
-            n_peers = len(df_pub)
-            v       = df_pub["Vendute_Ultimi_30_Giorni"]
-            v_p25   = float(np.percentile(v, 25))
-            v_p50   = float(np.percentile(v, 50))
-            v_p75   = float(np.percentile(v, 75))
+        n_peers = len(df_pub)
+        v       = df_pub["Vendute_Ultimi_30_Giorni"]
+        v_p25   = float(np.percentile(v, 25))
+        v_p50   = float(np.percentile(v, 50))
+        v_p75   = float(np.percentile(v, 75))
 
-            if fallback_note:
-                st.info(fallback_note)
+        if fallback_note:
+            st.info(fallback_note)
 
-            # ── Calcolo scenari ─────────────────────────────────────────────
-            def _sim_scenario(vel: float, mesi: int, safety: int,
-                               costo: float, max_expo: float) -> dict:
-                copie = max(1, round(vel * mesi) + safety)
-                if max_expo > 0 and costo > 0:
-                    copie = max(1, min(copie, int(max_expo // costo)))
-                copertura      = (copie / vel) if vel > 0 else float("inf")
-                investimento   = copie * costo
-                ricavo_atteso  = copie * sim_prezzo
-                margine_totale = copie * (sim_prezzo - costo)
-                margine_pct    = ((sim_prezzo - costo) / sim_prezzo * 100) if sim_prezzo > 0 else 0.0
-                return {
-                    "copie": copie, "vel": vel, "copertura": copertura,
-                    "investimento": investimento, "ricavo_atteso": ricavo_atteso,
-                    "margine_totale": margine_totale, "margine_pct": margine_pct,
-                }
+        # ── Calcolo scenari ─────────────────────────────────────────────
+        def _sim_scenario(vel: float, mesi: int, safety: int,
+                           costo: float, max_expo: float) -> dict:
+            copie = max(1, round(vel * mesi) + safety)
+            if max_expo > 0 and costo > 0:
+                copie = max(1, min(copie, int(max_expo // costo)))
+            copertura      = (copie / vel) if vel > 0 else float("inf")
+            investimento   = copie * costo
+            ricavo_atteso  = copie * sim_prezzo
+            margine_totale = copie * (sim_prezzo - costo)
+            margine_pct    = ((sim_prezzo - costo) / sim_prezzo * 100) if sim_prezzo > 0 else 0.0
+            return {
+                "copie": copie, "vel": vel, "copertura": copertura,
+                "investimento": investimento, "ricavo_atteso": ricavo_atteso,
+                "margine_totale": margine_totale, "margine_pct": margine_pct,
+            }
 
-            sc_pru = _sim_scenario(v_p25, sim_target_mesi, sim_safety, costo_copia, float(sim_max_expo))
-            sc_bas = _sim_scenario(v_p50, sim_target_mesi, sim_safety, costo_copia, float(sim_max_expo))
-            sc_ott = _sim_scenario(v_p75, sim_target_mesi, sim_safety, costo_copia, float(sim_max_expo))
+        sc_pru = _sim_scenario(v_p25, sim_target_mesi, sim_safety, costo_copia, float(sim_max_expo))
+        sc_bas = _sim_scenario(v_p50, sim_target_mesi, sim_safety, costo_copia, float(sim_max_expo))
+        sc_ott = _sim_scenario(v_p75, sim_target_mesi, sim_safety, costo_copia, float(sim_max_expo))
 
-            def _cov_str(c: float) -> str:
-                return f"{c:.1f} mesi" if c != float("inf") else "∞ mesi"
+        def _cov_str(c: float) -> str:
+            return f"{c:.1f} mesi" if c != float("inf") else "∞ mesi"
 
-            # ── Peer group expander ─────────────────────────────────────────
-            section("Dati di riferimento")
-            with st.expander(
-                f"📋 {n_peers} titoli analizzati come confronto"
-                + (f" · editore: {sim_editore}" if editore_q else " · tutti gli editori")
-            ):
-                _peer_cols = [c for c in [
-                    "Titolo", "Autore", "Editore",
-                    "Giacenza", "Vendute_Ultimi_30_Giorni", "Prezzo_Copertina",
-                ] if c in df_pub.columns]
-                df_peer_disp = (
-                    df_pub[_peer_cols]
-                    .sort_values("Vendute_Ultimi_30_Giorni", ascending=False)
-                    .copy()
-                )
-                st.dataframe(
-                    df_peer_disp, use_container_width=True, hide_index=True,
-                    height=min(360, 45 + len(df_peer_disp) * 35),
-                )
-                st.caption(
-                    f"Velocità di vendita mensile (copie/30 gg) — "
-                    f"Prudente (P25): **{v_p25:.1f}** · "
-                    f"Base (P50): **{v_p50:.1f}** · "
-                    f"Ottimista (P75): **{v_p75:.1f}**"
-                )
-
-            # ── Raccomandazione ─────────────────────────────────────────────
-            st.divider()
-            section("Raccomandazione d'ordine")
+        # ── Peer group expander ─────────────────────────────────────────
+        section("Dati di riferimento")
+        with st.expander(
+            f"📋 {n_peers} titoli analizzati come confronto"
+            + (f" · editore: {sim_editore}" if editore_q else " · tutti gli editori")
+        ):
+            _peer_cols = [c for c in [
+                "Titolo", "Autore", "Editore",
+                "Giacenza", "Vendute_Ultimi_30_Giorni", "Prezzo_Copertina",
+            ] if c in df_pub.columns]
+            df_peer_disp = (
+                df_pub[_peer_cols]
+                .sort_values("Vendute_Ultimi_30_Giorni", ascending=False)
+                .copy()
+            )
+            st.dataframe(
+                df_peer_disp, use_container_width=True, hide_index=True,
+                height=min(360, 45 + len(df_peer_disp) * 35),
+            )
             st.caption(
-                f"Basata su {n_peers} titoli di confronto · "
-                f"copertura obiettivo: {sim_target_mesi} "
-                f"{'mese' if sim_target_mesi == 1 else 'mesi'} · "
-                f"scorta sicurezza: {sim_safety} "
-                f"{'copia' if sim_safety == 1 else 'copie'}"
+                f"Velocità di vendita mensile (copie/30 gg) — "
+                f"Prudente (P25): **{v_p25:.1f}** · "
+                f"Base (P50): **{v_p50:.1f}** · "
+                f"Ottimista (P75): **{v_p75:.1f}**"
             )
 
-            _c1, _c2, _c3 = st.columns(3)
-            with _c1:
-                metric_card(
-                    "Prudente",
-                    f"{sc_pru['copie']} copie",
-                    "neutral",
-                    f"Copertura: {_cov_str(sc_pru['copertura'])} · "
-                    f"Investimento: {fmt_euro(sc_pru['investimento'])}",
-                )
-            with _c2:
-                metric_card(
-                    "Base  ←  punto di partenza",
-                    f"{sc_bas['copie']} copie",
-                    "warning",
-                    f"Copertura: {_cov_str(sc_bas['copertura'])} · "
-                    f"Investimento: {fmt_euro(sc_bas['investimento'])}",
-                )
-            with _c3:
-                metric_card(
-                    "Ottimista",
-                    f"{sc_ott['copie']} copie",
-                    "positive",
-                    f"Copertura: {_cov_str(sc_ott['copertura'])} · "
-                    f"Investimento: {fmt_euro(sc_ott['investimento'])}",
-                )
+        # ── Raccomandazione ─────────────────────────────────────────────
+        st.divider()
+        section("Raccomandazione d'ordine")
+        st.caption(
+            f"Basata su {n_peers} titoli di confronto · "
+            f"copertura obiettivo: {sim_target_mesi} "
+            f"{'mese' if sim_target_mesi == 1 else 'mesi'} · "
+            f"scorta sicurezza: {sim_safety} "
+            f"{'copia' if sim_safety == 1 else 'copie'}"
+        )
 
-            # ── Grafico scenari ─────────────────────────────────────────────
-            if PLOTLY:
-                try:
-                    st.divider()
-                    section("Scenari a confronto")
+        _c1, _c2, _c3 = st.columns(3)
+        with _c1:
+            metric_card(
+                "Prudente",
+                f"{sc_pru['copie']} copie",
+                "neutral",
+                f"Copertura: {_cov_str(sc_pru['copertura'])} · "
+                f"Investimento: {fmt_euro(sc_pru['investimento'])}",
+            )
+        with _c2:
+            metric_card(
+                "Base  ←  punto di partenza",
+                f"{sc_bas['copie']} copie",
+                "warning",
+                f"Copertura: {_cov_str(sc_bas['copertura'])} · "
+                f"Investimento: {fmt_euro(sc_bas['investimento'])}",
+            )
+        with _c3:
+            metric_card(
+                "Ottimista",
+                f"{sc_ott['copie']} copie",
+                "positive",
+                f"Copertura: {_cov_str(sc_ott['copertura'])} · "
+                f"Investimento: {fmt_euro(sc_ott['investimento'])}",
+            )
 
-                    nomi_sc  = ["Prudente\n(P25)", "Base\n(Mediana)", "Ottimista\n(P75)"]
-                    copie_sc = [sc_pru["copie"], sc_bas["copie"], sc_ott["copie"]]
-                    cov_sc   = [_cov_str(s["copertura"]) for s in [sc_pru, sc_bas, sc_ott]]
-                    inv_sc   = [fmt_euro(s["investimento"]) for s in [sc_pru, sc_bas, sc_ott]]
-                    vel_sc   = [s["vel"] for s in [sc_pru, sc_bas, sc_ott]]
+        # ── Grafico scenari ─────────────────────────────────────────────
+        if PLOTLY:
+            try:
+                st.divider()
+                section("Scenari a confronto")
 
-                    # Validazione
-                    if not copie_sc or all(c == 0 for c in copie_sc):
-                        st.warning("Impossibile generare scenari con i dati attuali")
-                    else:
-                        fig_sim = go.Figure(go.Bar(
-                            y=nomi_sc,
-                            x=copie_sc,
-                            orientation="h",
-                            marker_color=["#2A5FAC", "#B5362C", "#00877A"],
-                            marker_line=dict(width=1.5, color="rgba(0,0,0,0.1)"),
-                            text=[f"  <b>{c}</b> cop.<br>Cov: {cov}" for c, cov in zip(copie_sc, cov_sc)],
-                            textposition="outside",
-                            textfont=dict(size=11, color="#16130F", family="Inter"),
-                            hovertemplate=(
-                                "<b>%{y}</b><br>"
-                                "Copie consigliate: <b>%{x}</b><br>"
-                                "Vel. vendita: <b>%{customdata[0]:.1f}%</b> cop./mese<br>"
-                                "Copertura: <b>%{customdata[1]}</b><br>"
-                                "Investimento: <b>%{customdata[2]}</b><br>"
-                                "<extra></extra>"
-                            ),
-                            customdata=list(zip(vel_sc, cov_sc, inv_sc)),
-                        ))
-                        _econ(
-                            fig_sim,
-                            title=(
-                                f"Copie consigliate per «{sim_titolo.strip()}»"
-                                if sim_titolo.strip()
-                                else "Copie consigliate per il nuovo titolo"
-                            ),
-                            subtitle=(
-                                f"Tre scenari su {n_peers} titoli di confronto · "
-                                f"copertura: {sim_target_mesi} mesi · "
-                                + (f"editore: {sim_editore}" if sim_editore.strip() else "tutti gli editori")
-                            ),
-                            src="Elaborazione su dati del gestionale",
-                        )
-                        max_copie = max(copie_sc) if copie_sc else 1
-                        fig_sim.update_xaxes(
-                            range=[0, max_copie * 1.65],
-                            title=None,
-                            dtick=1 if max_copie <= 20 else None,
-                        )
-                        fig_sim.update_layout(
-                            height=380,
-                            margin=dict(l=12, r=150, t=88, b=80),
-                            hovermode="y",
-                        )
-                        st.plotly_chart(fig_sim, use_container_width=True,
-                                        config={"displayModeBar": True, "scrollZoom": False, "displaylogo": False,
-                                                "modeBarButtonsToRemove": ["lasso2d", "select2d", "zoom2d", "pan2d"]})
-                except Exception as e:
-                    st.error(f"Errore nel grafico scenari: {str(e)}")
+                nomi_sc  = ["Prudente\n(P25)", "Base\n(Mediana)", "Ottimista\n(P75)"]
+                copie_sc = [sc_pru["copie"], sc_bas["copie"], sc_ott["copie"]]
+                cov_sc   = [_cov_str(s["copertura"]) for s in [sc_pru, sc_bas, sc_ott]]
+                inv_sc   = [fmt_euro(s["investimento"]) for s in [sc_pru, sc_bas, sc_ott]]
+                vel_sc   = [s["vel"] for s in [sc_pru, sc_bas, sc_ott]]
 
-            # ── Analisi economica ───────────────────────────────────────────
-            st.divider()
-            with st.expander("💰 Analisi economica per scenario"):
-                econ_rows = []
-                for nome, sc in [("Prudente", sc_pru), ("Base", sc_bas), ("Ottimista", sc_ott)]:
-                    econ_rows.append({
-                        "Scenario":                  nome,
-                        "Copie":                     sc["copie"],
-                        "Vel. vendita (cop./mese)":  f"{sc['vel']:.1f}",
-                        "Copertura stimata":         _cov_str(sc["copertura"]),
-                        "Investimento":              fmt_euro(sc["investimento"]),
-                        "Ricavo (se tutto venduto)": fmt_euro(sc["ricavo_atteso"]),
-                        "Margine lordo":             fmt_euro(sc["margine_totale"]),
-                        "Margine %":                 f"{sc['margine_pct']:.1f}%",
-                    })
-                st.dataframe(pd.DataFrame(econ_rows), use_container_width=True, hide_index=True)
-                st.caption(
-                    f"Prezzo copertina: **{fmt_euro(sim_prezzo)}** · "
-                    f"Sconto: **{fmt_euro(sim_sconto_val)}** ({sim_sconto_pct:.1f}%) · "
-                    f"Costo netto/copia: **{fmt_euro(costo_copia)}**"
-                )
+                # Validazione
+                if not copie_sc or all(c == 0 for c in copie_sc):
+                    st.warning("Impossibile generare scenari con i dati attuali")
+                else:
+                    fig_sim = go.Figure(go.Bar(
+                        y=nomi_sc,
+                        x=copie_sc,
+                        orientation="h",
+                        marker_color=["#2A5FAC", "#B5362C", "#00877A"],
+                        marker_line=dict(width=1.5, color="rgba(0,0,0,0.1)"),
+                        text=[f"  <b>{c}</b> cop.<br>Cov: {cov}" for c, cov in zip(copie_sc, cov_sc)],
+                        textposition="outside",
+                        textfont=dict(size=11, color="#16130F", family="Inter"),
+                        hovertemplate=(
+                            "<b>%{y}</b><br>"
+                            "Copie consigliate: <b>%{x}</b><br>"
+                            "Vel. vendita: <b>%{customdata[0]:.1f}</b> cop./mese<br>"
+                            "Copertura: <b>%{customdata[1]}</b><br>"
+                            "Investimento: <b>%{customdata[2]}</b><br>"
+                            "<extra></extra>"
+                        ),
+                        customdata=list(zip(vel_sc, cov_sc, inv_sc)),
+                    ))
+                    _econ(
+                        fig_sim,
+                        title=(
+                            f"Copie consigliate per «{sim_titolo.strip()}»"
+                            if sim_titolo.strip()
+                            else "Copie consigliate per il nuovo titolo"
+                        ),
+                        subtitle=(
+                            f"Tre scenari su {n_peers} titoli di confronto · "
+                            f"copertura: {sim_target_mesi} mesi · "
+                            + (f"editore: {sim_editore}" if sim_editore.strip() else "tutti gli editori")
+                        ),
+                        src="Elaborazione su dati del gestionale",
+                    )
+                    max_copie = max(copie_sc) if copie_sc else 1
+                    fig_sim.update_xaxes(
+                        range=[0, max_copie * 1.65],
+                        title=None,
+                        dtick=1 if max_copie <= 20 else None,
+                    )
+                    fig_sim.update_layout(
+                        height=380,
+                        margin=dict(l=12, r=150, t=88, b=80),
+                        hovermode="y",
+                    )
+                    st.plotly_chart(fig_sim, use_container_width=True,
+                                    config={"displayModeBar": True, "scrollZoom": False, "displaylogo": False,
+                                            "modeBarButtonsToRemove": ["lasso2d", "select2d", "zoom2d", "pan2d"]})
+            except Exception as e:
+                st.error(f"Errore nel grafico scenari: {str(e)}")
 
-            # ── Note metodologiche ──────────────────────────────────────────
-            st.divider()
-            with st.expander("📌 Come funziona la stima — leggere prima di usare i numeri"):
-                st.markdown(f"""
+        # ── Analisi economica ───────────────────────────────────────────
+        st.divider()
+        with st.expander("💰 Analisi economica per scenario"):
+            econ_rows = []
+            for nome, sc in [("Prudente", sc_pru), ("Base", sc_bas), ("Ottimista", sc_ott)]:
+                econ_rows.append({
+                    "Scenario":                  nome,
+                    "Copie":                     sc["copie"],
+                    "Vel. vendita (cop./mese)":  f"{sc['vel']:.1f}",
+                    "Copertura stimata":         _cov_str(sc["copertura"]),
+                    "Investimento":              fmt_euro(sc["investimento"]),
+                    "Ricavo (se tutto venduto)": fmt_euro(sc["ricavo_atteso"]),
+                    "Margine lordo":             fmt_euro(sc["margine_totale"]),
+                    "Margine %":                 f"{sc['margine_pct']:.1f}%",
+                })
+            st.dataframe(pd.DataFrame(econ_rows), use_container_width=True, hide_index=True)
+            st.caption(
+                f"Prezzo copertina: **{fmt_euro(sim_prezzo)}** · "
+                f"Sconto: **{fmt_euro(sim_sconto_val)}** ({sim_sconto_pct:.1f}%) · "
+                f"Costo netto/copia: **{fmt_euro(costo_copia)}**"
+            )
+
+        # ── Note metodologiche ──────────────────────────────────────────
+        st.divider()
+        with st.expander("📌 Come funziona la stima — leggere prima di usare i numeri"):
+            st.markdown(f"""
 **Peer group** — titoli dello stesso editore nel tuo gestionale con giacenza > 0,
 nella fascia di prezzo ±40% rispetto al nuovo titolo (se almeno {MIN_PEERS} corrispondenze).
 Se l'editore ha meno di {MIN_PEERS} titoli in stock, si usano tutti gli editori presenti.
