@@ -1134,7 +1134,6 @@ with tab_radar:
                 "`Data_Fatturazione` (gg/mm/aaaa) · `Giacenza` · "
                 "`Vendute_Ultimi_30_Giorni` · `Prezzo_Copertina` · `Sconto_Libreria`"
             )
-        st.stop()
 
     if df_mag is not None:
         with st.expander("⚙️ Parametri analisi", expanded=False):
