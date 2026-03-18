@@ -375,7 +375,7 @@ def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
             renamed[col] = COL_ALIASES[key]
     return df.rename(columns=renamed)
 
-def validate_schema(df, required, label):
+def validate_schema(df: pd.DataFrame, required: set[str], label: str) -> bool:
     missing = required - set(df.columns)
     if missing:
         st.error(f"**{label}** — colonne mancanti: `{'`, `'.join(sorted(missing))}`.")
@@ -400,7 +400,7 @@ def load_csv(raw_bytes: bytes) -> pd.DataFrame:
             continue
     raise ValueError("Impossibile leggere il file: encoding non supportato.")
 
-def get_or_load(key, uploaded_file, schema, label):
+def get_or_load(key: str, uploaded_file, schema: list[str], label: str) -> pd.DataFrame | None:
     if uploaded_file is None:
         return st.session_state.get(key)
     name_key = f"{key}_name"
@@ -574,7 +574,7 @@ def get_file_stats(df: pd.DataFrame, schema: frozenset) -> dict:
             "missing_cols": set(),
         }
 
-def metric_card(label, value, tone="neutral", note=""):
+def metric_card(label: str, value: str, tone: str = "neutral", note: str = "") -> None:
     t = _TONE.get(tone, _TONE["neutral"])
     note_html = f'\n        <div class="mc-note">{note}</div>' if note else ""
     st.markdown(f"""<div class="metric-card" style="border-left-color:{t['bar']}">
@@ -582,20 +582,20 @@ def metric_card(label, value, tone="neutral", note=""):
         <div class="mc-value" style="color:{t['val']}">{value}</div>{note_html}
     </div>""", unsafe_allow_html=True)
 
-def empty_state(icon, title, body):
+def empty_state(icon: str, title: str, body: str) -> None:
     st.markdown(f"""<div class="empty-state">
         <div class="es-icon">{icon}</div>
         <div class="es-title">{title}</div>
         <div class="es-body">{body}</div>
     </div>""", unsafe_allow_html=True)
 
-def page_header(title, subtitle):
+def page_header(title: str, subtitle: str) -> None:
     st.markdown(f"""<div class="page-hero">
         <div class="page-hero-title">{title}</div>
         <div class="page-hero-sub">{subtitle}</div>
     </div>""", unsafe_allow_html=True)
 
-def section(title):
+def section(title: str) -> None:
     st.markdown(f'<div class="section-title">{title}</div>', unsafe_allow_html=True)
 
 
@@ -719,7 +719,7 @@ def _econ(
 # ---------------------------------------------------------------------------
 # UTILITÀ VALIDAZIONE DATI PER GRAFICI
 # ---------------------------------------------------------------------------
-def validate_numeric_data(series, name="dati"):
+def validate_numeric_data(series: pd.Series, name: str = "dati") -> bool:
     """Valida una serie di dati numerici per il plotting.
 
     Controlla:
@@ -758,7 +758,7 @@ def sanitize_csv(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def safe_divide(numerator, denominator, default=0):
+def safe_divide(numerator: float, denominator: float, default: float = 0) -> float:
     """Divisione sicura con protezione da divisioni per zero."""
     try:
         if denominator == 0 or np.isnan(denominator) or np.isinf(denominator):
@@ -3408,7 +3408,7 @@ Non include costi indiretti (affitto, personale, costi di reso eventuali).
 # PREFERENCES PERSISTENCE — salva le preferenze alla fine di ogni sessione
 # ===========================================================================
 @st.cache_data(show_spinner=False)
-def _should_save_prefs():
+def _should_save_prefs() -> bool:
     """Marker per evitare salvataggio multiplo nella stessa sessione."""
     return True
 
