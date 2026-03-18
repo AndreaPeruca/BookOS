@@ -2832,6 +2832,50 @@ with tab_storico:
                             st.plotly_chart(fig_val, use_container_width=True,
                                             config={"displayModeBar": True, "scrollZoom": True, "displaylogo": False,
                                                     "modeBarButtonsToRemove": ["lasso2d", "select2d"]})
+
+                            # ── Tendenza in linguaggio semplice ───────────────
+                            try:
+                                x_idx  = np.arange(n_snaps, dtype=float)
+                                y_vals = df_agg["Valore_Mag"].values.astype(float)
+                                slope, intercept = np.polyfit(x_idx, y_vals, 1)
+                                val_proiettato   = max(0.0, intercept + slope * n_snaps)
+                                variazione_label = fmt_euro(abs(slope))
+
+                                if n_snaps == 2:
+                                    avviso_dati = (
+                                        " *(Con solo 2 snapshot è una stima grezza — "
+                                        "più rilevazioni rendono il trend più affidabile.)*"
+                                    )
+                                else:
+                                    avviso_dati = ""
+
+                                if slope > 500:
+                                    st.warning(
+                                        f"📈 **Il tuo magazzino sta crescendo** — "
+                                        f"ogni rilevazione valore aggiunge circa {variazione_label} di stock. "
+                                        f"Se va avanti così, il prossimo snapshot potrebbe mostrare "
+                                        f"circa **{fmt_euro(val_proiettato)}** di libri in giacenza. "
+                                        f"Più stock = più cassa immobilizzata: valuta rese o frena gli ordini."
+                                        + avviso_dati
+                                    )
+                                elif slope < -500:
+                                    st.success(
+                                        f"📉 **Il tuo magazzino si sta alleggerendo** — "
+                                        f"ogni rilevazione il valore scende di circa {variazione_label}. "
+                                        f"Se il ritmo continua, il prossimo snapshot potrebbe mostrare "
+                                        f"circa **{fmt_euro(val_proiettato)}** di stock — "
+                                        f"rese e vendite stanno funzionando."
+                                        + avviso_dati
+                                    )
+                                else:
+                                    st.info(
+                                        f"→ **Il valore del magazzino è sostanzialmente stabile** "
+                                        f"tra le rilevazioni (variazione media: {variazione_label})."
+                                        + avviso_dati
+                                    )
+                            except Exception:
+                                pass  # trend non critico, silenzioso
+
                 except Exception as e:
                     st.error(f"Errore nel grafico valore magazzino: {str(e)}")
 
@@ -3016,6 +3060,49 @@ with tab_storico:
                             file_name=f"titoli_fermi_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
                             mime="text/csv",
                         )
+
+                    # ── Quanto ti costano questi titoli? ──────────────────────
+                    try:
+                        valore_bloccato_oggi = tit_fermi["ValMag_Medio"].sum()
+                        # Stima valore residuo a 90 giorni:
+                        # ogni mese si vende ST_Medio% della giacenza → in 3 mesi
+                        # rimane max(0, 1 − 3×ST_Medio/100) del valore attuale.
+                        val_90 = tit_fermi.apply(
+                            lambda r: max(0.0, 1 - 3 * r["ST_Medio"] / 100) * r["ValMag_Medio"],
+                            axis=1,
+                        ).sum()
+                        n_fermi = len(tit_fermi)
+
+                        st.markdown("---")
+                        if val_90 >= valore_bloccato_oggi * 0.8:
+                            # Il sell-through è talmente basso che quasi nulla si muove
+                            st.warning(
+                                f"💸 **Questi {n_fermi} titoli tengono bloccati "
+                                f"circa {fmt_euro(valore_bloccato_oggi)} di cassa.** "
+                                f"Il loro ritmo di vendita è così lento che, "
+                                f"senza intervento, tra 3 mesi ne resteranno immobilizzati "
+                                f"ancora circa **{fmt_euro(val_90)}**. "
+                                f"I titoli in cima alla lista sono quelli su cui agire prima: "
+                                f"rendili al distributore prima che la finestra di resa si chiuda."
+                            )
+                        elif val_90 > 0:
+                            liberato = valore_bloccato_oggi - val_90
+                            st.info(
+                                f"💸 **Questi {n_fermi} titoli tengono bloccati "
+                                f"circa {fmt_euro(valore_bloccato_oggi)} di cassa.** "
+                                f"Con il loro ritmo attuale di vendita, "
+                                f"tra 3 mesi il valore immobilizzato scenderà a circa "
+                                f"**{fmt_euro(val_90)}** — "
+                                f"si libereranno circa {fmt_euro(liberato)}, "
+                                f"ma lentamente. Una resa accelererebbe il recupero."
+                            )
+                        else:
+                            st.success(
+                                f"✓ Con il ritmo attuale, tra 3 mesi questi titoli "
+                                f"avranno quasi esaurito la giacenza senza bisogno di rese."
+                            )
+                    except Exception:
+                        pass  # non critico
 
                 # ── Grafico 4: Delta sell-through editori ─────────────────────
                 if df_delta_ed is not None and len(df_delta_ed) > 0:
