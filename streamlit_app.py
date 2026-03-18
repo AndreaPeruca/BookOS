@@ -118,6 +118,19 @@ COL_ALIASES = {
     "ean":                      "ISBN",
 }
 
+# Nomi leggibili per il libraio mostrati nella UI di mappatura colonne
+COL_FRIENDLY = {
+    "Titolo":                   "Titolo del libro",
+    "Autore":                   "Autore",
+    "ISBN":                     "ISBN / EAN (codice a barre)",
+    "Editore":                  "Editore / Casa editrice",
+    "Data_Fatturazione":        "Data di fatturazione (quando è arrivato in libreria)",
+    "Giacenza":                 "Giacenza (copie in magazzino)",
+    "Vendute_Ultimi_30_Giorni": "Copie vendute negli ultimi 30 giorni",
+    "Prezzo_Copertina":         "Prezzo di copertina (€)",
+    "Sconto_Libreria":          "Sconto libreria (€ o %)",
+}
+
 # ---------------------------------------------------------------------------
 # PERSISTENZA INVENTARIO USATO
 # ---------------------------------------------------------------------------
@@ -416,10 +429,22 @@ def get_or_load(key: str, uploaded_file, schema: list[str], label: str) -> pd.Da
                 st.write(f"✓ Colonne normalizzate")
 
                 st.write("✓ Validazione schema…")
-                if not validate_schema(df, schema, label):
-                    status.update(label="❌ Schema non valido", state="error")
+                missing_cols = set(schema) - set(df.columns)
+                if missing_cols:
+                    # Salva il df grezzo per la UI di mappatura — non mostrare errore qui
+                    st.session_state["_col_map_df"]      = df
+                    st.session_state["_col_map_missing"] = missing_cols
+                    st.session_state["_col_map_file"]    = uploaded_file.name
+                    status.update(
+                        label="⚙️ Alcune colonne non riconosciute — abbinale manualmente",
+                        state="complete",
+                    )
                     return None
 
+                # Schema valido — pulisci eventuale stato di mappatura pendente
+                st.session_state.pop("_col_map_df",      None)
+                st.session_state.pop("_col_map_missing", None)
+                st.session_state.pop("_col_map_file",    None)
                 st.session_state[key] = df
                 st.session_state[name_key] = uploaded_file.name
                 status.update(label=f"✓ {label} caricato con successo", state="complete")
@@ -930,6 +955,73 @@ with st.sidebar:
 get_or_load("df_mag", mag_file_sb, SCHEMA_MAGAZZINO, "Gestionale magazzino")
 mag_ok = st.session_state["df_mag"] is not None
 
+# ---------------------------------------------------------------------------
+# UI MAPPATURA COLONNE — mostrata quando il file è caricato ma alcune
+# colonne non corrispondono ai nomi attesi
+# ---------------------------------------------------------------------------
+_col_map_df      = st.session_state.get("_col_map_df")
+_col_map_missing = st.session_state.get("_col_map_missing", set())
+
+if _col_map_df is not None and _col_map_missing and not mag_ok:
+    st.warning(
+        f"**Il tuo file è stato caricato**, ma non ho riconosciuto "
+        f"{len(_col_map_missing)} colonna/e. "
+        f"Abbinale manualmente qui sotto e il file verrà caricato automaticamente."
+    )
+    with st.expander("🔧 Abbina le colonne del tuo gestionale", expanded=True):
+        st.markdown(
+            "Per ogni informazione richiesta, scegli quale colonna del tuo file corrisponde. "
+            "Le colonne già riconosciute automaticamente non compaiono qui."
+        )
+        st.caption(
+            f"**Colonne trovate nel file:** "
+            + ", ".join(f"`{c}`" for c in sorted(_col_map_df.columns))
+        )
+        st.markdown("---")
+
+        available_cols = ["— non presente nel mio file —"] + sorted(_col_map_df.columns)
+        col_mapping: dict[str, str] = {}
+
+        # Due colonne per non allungare troppo la pagina
+        pairs = list(sorted(_col_map_missing))
+        left_cols, right_cols = st.columns(2)
+        for i, req_col in enumerate(pairs):
+            friendly = COL_FRIENDLY.get(req_col, req_col)
+            target   = left_cols if i % 2 == 0 else right_cols
+            chosen   = target.selectbox(
+                f"**{friendly}**",
+                options=available_cols,
+                key=f"_col_map_{req_col}",
+            )
+            col_mapping[req_col] = chosen
+
+        st.markdown("---")
+        if st.button("✅ Applica e carica il file", type="primary", use_container_width=True):
+            rename_map = {
+                v: k
+                for k, v in col_mapping.items()
+                if v != "— non presente nel mio file —"
+            }
+            df_mapped = _col_map_df.rename(columns=rename_map)
+            still_missing = set(SCHEMA_MAGAZZINO) - set(df_mapped.columns)
+            if still_missing:
+                missing_friendly = [COL_FRIENDLY.get(c, c) for c in sorted(still_missing)]
+                st.error(
+                    "Mancano ancora: **"
+                    + "**, **".join(missing_friendly)
+                    + "**. Abbina anche queste colonne prima di procedere."
+                )
+            else:
+                file_name = st.session_state.get("_col_map_file", "gestionale.csv")
+                st.session_state["df_mag"]      = df_mapped
+                st.session_state["df_mag_name"] = file_name
+                st.session_state.pop("_col_map_df",      None)
+                st.session_state.pop("_col_map_missing", None)
+                st.session_state.pop("_col_map_file",    None)
+                st.rerun()
+
+mag_ok = st.session_state["df_mag"] is not None
+
 # Navigazione a tab
 (tab_dash, tab_radar, tab_scaffale, tab_calc, tab_usato, tab_storico, tab_sim) = st.tabs([
     "📊 Dashboard",
@@ -1174,6 +1266,36 @@ with tab_radar:
             soglia_fe   = soglia_fs + timedelta(days=int(_giorni_finestra))
             rot_min_ui  = int(_rot_min)
 
+        # ── Filtro scolastici / stagionali ───────────────────────────────────
+        with st.expander("🚫 Escludi dalla resa (scolastici, stagionali…)", expanded=False):
+            st.markdown(
+                "I libri di testo e i titoli stagionali (calendari, agende…) "
+                "hanno regole di resa e rotazione diverse. "
+                "Escludili dall'analisi per non inquinare i risultati."
+            )
+            _editori_disponibili = (
+                sorted(df_mag["Editore"].dropna().unique().tolist())
+                if "Editore" in df_mag.columns else []
+            )
+            editori_esclusi = st.multiselect(
+                "Escludi questi editori",
+                options=_editori_disponibili,
+                default=[],
+                key="radar_editori_esclusi",
+                help="Utile per escludere in blocco editori scolastici (es. Zanichelli, Pearson, De Agostini Scuola).",
+                placeholder="Scegli uno o più editori…",
+            )
+            parole_escluse_raw = st.text_input(
+                "Escludi titoli che contengono queste parole (separate da virgola)",
+                value="",
+                key="radar_parole_escluse",
+                help="Es: matematica, scienze, agenda, calendario  →  tutti i titoli con queste parole vengono ignorati.",
+                placeholder="Es: matematica, calendario, agenda",
+            )
+            parole_escluse = [
+                p.strip().lower() for p in parole_escluse_raw.split(",") if p.strip()
+            ]
+
         st.markdown("**Costi di spedizione resa**")
         _cs1, _cs2 = st.columns(2)
         costo_spedizione_ui = _cs1.number_input(
@@ -1188,9 +1310,27 @@ with tab_radar:
         )
 
     if df_mag is not None:
+        # ── Applica filtro scolastici/stagionali ──────────────────────────────
+        df_mag_analisi = df_mag.copy()
+        _mask_escludi  = pd.Series(False, index=df_mag_analisi.index)
+        if editori_esclusi and "Editore" in df_mag_analisi.columns:
+            _mask_escludi |= df_mag_analisi["Editore"].isin(editori_esclusi)
+        if parole_escluse and "Titolo" in df_mag_analisi.columns:
+            _titoli_lower = df_mag_analisi["Titolo"].astype(str).str.lower()
+            for _p in parole_escluse:
+                _mask_escludi |= _titoli_lower.str.contains(_p, regex=False)
+        n_esclusi = int(_mask_escludi.sum())
+        df_mag_analisi = df_mag_analisi[~_mask_escludi]
+        if n_esclusi > 0:
+            st.info(
+                f"🚫 **{n_esclusi} titolo/i esclusi** dall'analisi "
+                f"(scolastici o stagionali). "
+                f"L'analisi Radar riguarda i restanti **{len(df_mag_analisi)}** titoli."
+            )
+
         with st.spinner("🔄 Analisi magazzino in corso…"):
             seg = processa_magazzino(
-                df_mag, soglia_inv, soglia_fs, soglia_fe, rot_min_ui,
+                df_mag_analisi, soglia_inv, soglia_fs, soglia_fe, rot_min_ui,
                 costo_spedizione=costo_spedizione_ui,
                 costo_per_copia=costo_per_copia_ui,
             )
