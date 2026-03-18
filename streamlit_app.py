@@ -1025,7 +1025,7 @@ mag_ok = st.session_state["df_mag"] is not None
 # Navigazione a tab
 (tab_dash, tab_radar, tab_scaffale, tab_calc, tab_usato, tab_storico, tab_sim) = st.tabs([
     "📊 Dashboard",
-    "🔍 Radar",
+    "🔍 Analisi Resi",
     "💰 Scaffale",
     "🧮 Margine",
     "📚 Usato",
@@ -1095,7 +1095,7 @@ with tab_dash:
     <div class="insight-body">
       <div class="insight-value" style="color:{'#B5362C' if _tone_rend=='urgent' else '#D97706' if _tone_rend=='warning' else '#16A34A'}">{n_rend}</div>
       <div class="insight-label">Titoli da rendere</div>
-      <div class="insight-hint">Fermi da &gt;6 mesi · vai al tab Radar</div>
+      <div class="insight-hint">Fermi da &gt;6 mesi · vai al tab Analisi Resi</div>
     </div>
   </div>
   <div class="insight-card {_tone_lenti}">
@@ -1134,7 +1134,7 @@ with tab_dash:
             _ps2_icon  = "🔴" if _n_lenti > 30 else "🟡" if _n_lenti > 10 else "🟢"
             st.markdown(f"""<div style="display:flex;flex-direction:column;gap:.6rem;margin-bottom:1rem">
   <div style="background:#F9F6F2;border-left:4px solid {_ps1_color};border-radius:4px;padding:.75rem 1rem;font-size:.9rem">
-    {_ps1_icon} <strong>Radar</strong> — analizza i <strong>{_n_rendere}</strong> titoli fermi e scopri cosa rendere all'editore
+    {_ps1_icon} <strong>Analisi Resi</strong> — analizza i <strong>{_n_rendere}</strong> titoli fermi e scopri cosa rendere all'editore
   </div>
   <div style="background:#F9F6F2;border-left:4px solid {_ps2_color};border-radius:4px;padding:.75rem 1rem;font-size:.9rem">
     {_ps2_icon} <strong>Scaffale</strong> — calcola il costo di tenere <strong>{_n_lenti}</strong> titoli lenti sullo scaffale
@@ -1185,7 +1185,7 @@ with tab_dash:
             </div>
             <div class="onb-step">
                 <div class="onb-step-num">2</div>
-                <div class="onb-step-text"><strong>Vai al tab Radar</strong><br>Scopri quali libri rendere all'editore, quali tenere e quali stanno performando bene.</div>
+                <div class="onb-step-text"><strong>Vai al tab Analisi Resi</strong><br>Scopri quali libri rendere all'editore, quali tenere e quali stanno performando bene.</div>
             </div>
             <div class="onb-step">
                 <div class="onb-step-num">3</div>
@@ -1200,15 +1200,15 @@ with tab_dash:
             if st.button("📊 Prova con i dati demo", use_container_width=True, key="demo_btn_dash"):
                 st.session_state["df_mag"] = get_demo_df()
                 st.session_state["df_mag_name"] = "demo_magazzino.csv [DEMO]"
-                st.toast("Demo caricata! Vai al tab Radar per iniziare.", icon="📊")
+                st.toast("Demo caricata! Vai al tab Analisi Resi per iniziare.", icon="📊")
                 st.rerun()
 
 # ===========================================================================
-# ANALISI RESI — Radar Salva-Cassa
+# ANALISI RESI
 # ===========================================================================
 with tab_radar:
     page_header(
-        "Radar Salva-Cassa",
+        "Analisi Resi",
         f"Individua i titoli da rendere e quelli a rischio di fermo — aggiornato al {DATA_SISTEMA.strftime('%d/%m/%Y')}.",
     )
     df_mag = st.session_state.get("df_mag")
@@ -1325,7 +1325,7 @@ with tab_radar:
             st.info(
                 f"🚫 **{n_esclusi} titolo/i esclusi** dall'analisi "
                 f"(scolastici o stagionali). "
-                f"L'analisi Radar riguarda i restanti **{len(df_mag_analisi)}** titoli."
+                f"L'analisi riguarda i restanti **{len(df_mag_analisi)}** titoli."
             )
 
         with st.spinner("🔄 Analisi magazzino in corso…"):
@@ -2648,7 +2648,7 @@ with tab_storico:
         st.divider()
         st.caption(
             "**Come preparare gli snapshot:** esporta il gestionale ogni mese o trimestre. "
-            "Usa lo stesso formato CSV del Radar Salva-Cassa — nessuna colonna aggiuntiva richiesta."
+            "Usa lo stesso formato CSV dell'Analisi Resi — nessuna colonna aggiuntiva richiesta."
         )
 
     elif len(files_storico) < 2:
