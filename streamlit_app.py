@@ -1201,6 +1201,20 @@ with tab_radar:
         for msg in seg["warnings"]:
             st.warning(f"⚠️ {msg}")
 
+        # ── Banner parametri default ─────────────────────────────────────────
+        _usa_default = (
+            soglia_inv == SOGLIA_INVENDUTO
+            and rot_min_ui == SOGLIA_ROTAZIONE_MIN
+            and costo_spedizione_ui == 0.0
+            and costo_per_copia_ui == 0.0
+        )
+        if _usa_default:
+            st.caption(
+                "📅 Stai usando i parametri standard: finestra di resa 152–182 giorni, "
+                "rotazione minima 3 copie/mese, nessun costo di spedizione. "
+                "Se il tuo contratto con i distributori è diverso, apri **⚙️ Impostazioni avanzate** qui sopra."
+            )
+
         df, df_scaduto, df_tenere, df_rendere = seg["df"], seg["scaduto"], seg["tenere"], seg["rendere"]
 
         # ── Filtri avanzati ─────────────────────────────────────────────────
