@@ -131,6 +131,18 @@ COL_FRIENDLY = {
     "Sconto_Libreria":          "Sconto libreria (€ o %)",
 }
 
+# Etichette brevi per le intestazioni delle tabelle mostrate all'utente
+COL_DISPLAY = {
+    "Data_Fatturazione":         "Fatturato il",
+    "Giacenza":                  "In magazzino",
+    "Vendute_Ultimi_30_Giorni":  "Vendute/mese",
+    "Prezzo_Copertina":          "Prezzo (€)",
+    "Sconto_Libreria":           "Sconto (€)",
+    "Valore_Recuperabile":       "Valore recuperabile",
+    "Valore_Recuperabile_Netto": "Valore netto",
+    "Accordo":                   "Accordo distributore",
+}
+
 # ---------------------------------------------------------------------------
 # PERSISTENZA INVENTARIO USATO
 # ---------------------------------------------------------------------------
@@ -1296,6 +1308,84 @@ with tab_radar:
                 p.strip().lower() for p in parole_escluse_raw.split(",") if p.strip()
             ]
 
+        # ── Accordi secondari (multi-distributore) ────────────────────────────
+        accordi_secondari: list[dict] = []
+        _editori_tutti = (
+            sorted(df_mag["Editore"].dropna().unique().tolist())
+            if "Editore" in df_mag.columns else []
+        )
+        with st.expander("🤝 Ho più di un accordo con i distributori", expanded=False):
+            st.markdown(
+                "Se lavori con più distributori e ognuno ha finestre di resa diverse "
+                "(es. Messaggerie 6 mesi, un editore diretto 3 mesi), "
+                "definisci qui gli accordi secondari. "
+                "I titoli degli editori che assegni a un accordo secondario vengono analizzati "
+                "con le sue soglie; il resto usa i parametri principali sopra."
+            )
+            _usa_secondari = st.checkbox(
+                "Aggiungi un accordo secondario", key="radar_usa_accordo2"
+            )
+            if _usa_secondari:
+                st.markdown("**Accordo secondario 1**")
+                _a2c1, _a2c2, _a2c3 = st.columns(3)
+                _a2_nome     = st.text_input("Nome accordo (es. PDE, editore diretto…)",
+                                              value="Accordo 2", key="radar_a2_nome")
+                _a2_inv      = _a2c1.number_input("Invenduto dopo (giorni)",
+                                                   min_value=30, max_value=730, value=90, step=30,
+                                                   key="radar_a2_inv")
+                _a2_finestra = _a2c2.number_input("Finestra resa (giorni)",
+                                                   min_value=7, max_value=90, value=15, step=7,
+                                                   key="radar_a2_finestra")
+                _a2_rot      = _a2c3.number_input("Rotazione minima (cop./mese)",
+                                                   min_value=1, max_value=20, value=3, step=1,
+                                                   key="radar_a2_rot")
+                _a2_editori  = st.multiselect(
+                    "Editori inclusi in questo accordo",
+                    options=_editori_tutti,
+                    default=[],
+                    key="radar_a2_editori",
+                    placeholder="Scegli gli editori di questo distributore…",
+                )
+                if _a2_editori:
+                    accordi_secondari.append({
+                        "nome":     _a2_nome or "Accordo 2",
+                        "inv":      int(_a2_inv),
+                        "finestra": int(_a2_finestra),
+                        "rot":      int(_a2_rot),
+                        "editori":  _a2_editori,
+                    })
+
+                _usa_terzo = st.checkbox("Aggiungi un terzo accordo", key="radar_usa_accordo3")
+                if _usa_terzo:
+                    st.markdown("**Accordo secondario 2**")
+                    _a3c1, _a3c2, _a3c3 = st.columns(3)
+                    _a3_nome     = st.text_input("Nome accordo",
+                                                  value="Accordo 3", key="radar_a3_nome")
+                    _a3_inv      = _a3c1.number_input("Invenduto dopo (giorni)",
+                                                       min_value=30, max_value=730, value=90, step=30,
+                                                       key="radar_a3_inv")
+                    _a3_finestra = _a3c2.number_input("Finestra resa (giorni)",
+                                                       min_value=7, max_value=90, value=15, step=7,
+                                                       key="radar_a3_finestra")
+                    _a3_rot      = _a3c3.number_input("Rotazione minima (cop./mese)",
+                                                       min_value=1, max_value=20, value=3, step=1,
+                                                       key="radar_a3_rot")
+                    _a3_editori  = st.multiselect(
+                        "Editori inclusi in questo accordo",
+                        options=_editori_tutti,
+                        default=[],
+                        key="radar_a3_editori",
+                        placeholder="Scegli gli editori di questo distributore…",
+                    )
+                    if _a3_editori:
+                        accordi_secondari.append({
+                            "nome":     _a3_nome or "Accordo 3",
+                            "inv":      int(_a3_inv),
+                            "finestra": int(_a3_finestra),
+                            "rot":      int(_a3_rot),
+                            "editori":  _a3_editori,
+                        })
+
         st.markdown("**Costi di spedizione resa**")
         _cs1, _cs2 = st.columns(2)
         costo_spedizione_ui = _cs1.number_input(
@@ -1329,11 +1419,67 @@ with tab_radar:
             )
 
         with st.spinner("🔄 Analisi magazzino in corso…"):
-            seg = processa_magazzino(
-                df_mag_analisi, soglia_inv, soglia_fs, soglia_fe, rot_min_ui,
-                costo_spedizione=costo_spedizione_ui,
-                costo_per_copia=costo_per_copia_ui,
-            )
+            if not accordi_secondari:
+                # Percorso normale — un solo accordo
+                seg = processa_magazzino(
+                    df_mag_analisi, soglia_inv, soglia_fs, soglia_fe, rot_min_ui,
+                    costo_spedizione=costo_spedizione_ui,
+                    costo_per_copia=costo_per_copia_ui,
+                )
+            else:
+                # Multi-distributore: split per accordo, poi merge
+                _editori_secondari = {
+                    ed for a in accordi_secondari for ed in a["editori"]
+                }
+                _mask_princ = ~df_mag_analisi["Editore"].isin(_editori_secondari) \
+                    if "Editore" in df_mag_analisi.columns \
+                    else pd.Series(True, index=df_mag_analisi.index)
+
+                _segs = []
+                # Accordo principale
+                _df_princ = df_mag_analisi[_mask_princ]
+                _s = processa_magazzino(
+                    _df_princ, soglia_inv, soglia_fs, soglia_fe, rot_min_ui,
+                    costo_spedizione=costo_spedizione_ui,
+                    costo_per_copia=costo_per_copia_ui,
+                )
+                _s["_nome"] = "Accordo principale"
+                _segs.append(_s)
+
+                # Accordi secondari
+                for _acc in accordi_secondari:
+                    _df_acc = df_mag_analisi[
+                        df_mag_analisi["Editore"].isin(_acc["editori"])
+                    ] if "Editore" in df_mag_analisi.columns else df_mag_analisi.iloc[0:0]
+                    _inv_a  = DATA_SISTEMA - timedelta(days=_acc["inv"])
+                    _fs_a   = _inv_a
+                    _fe_a   = _inv_a + timedelta(days=_acc["finestra"])
+                    _s2 = processa_magazzino(
+                        _df_acc, _inv_a, _fs_a, _fe_a, _acc["rot"],
+                        costo_spedizione=costo_spedizione_ui,
+                        costo_per_copia=costo_per_copia_ui,
+                    )
+                    _s2["_nome"] = _acc["nome"]
+                    _segs.append(_s2)
+
+                # Merge: unisci df, rendere, tenere, scaduto aggiungendo colonna Accordo
+                def _tag(df: pd.DataFrame, nome: str) -> pd.DataFrame:
+                    if df.empty:
+                        return df
+                    out = df.copy()
+                    out.insert(0, "Accordo", nome)
+                    return out
+
+                seg = {
+                    "df":       pd.concat([_tag(s["df"],      s["_nome"]) for s in _segs], ignore_index=True),
+                    "rendere":  pd.concat([_tag(s["rendere"], s["_nome"]) for s in _segs], ignore_index=True),
+                    "tenere":   pd.concat([_tag(s["tenere"],  s["_nome"]) for s in _segs], ignore_index=True),
+                    "scaduto":  pd.concat([_tag(s["scaduto"], s["_nome"]) for s in _segs], ignore_index=True),
+                    "warnings":          [w for s in _segs for w in s["warnings"]],
+                    "auto_corrections":  [w for s in _segs for w in s["auto_corrections"]],
+                    "costo_spedizione":  costo_spedizione_ui,
+                    "costo_per_copia":   costo_per_copia_ui,
+                }
 
         for msg in seg.get("auto_corrections", []):
             st.info(f"🔧 **Correzione automatica** — {msg}")
@@ -1653,14 +1799,15 @@ with tab_radar:
             empty_state("✓", "Nessun titolo da rendere",
                         "Non ci sono titoli in scadenza di resa per questa finestra (o nessuno corrisponde ai filtri selezionati).")
         else:
-            cols_r = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
+            cols_r = [c for c in ["Accordo","Titolo","Autore","Editore","ISBN","Data_Fatturazione",
                                    "Giacenza","Vendute_Ultimi_30_Giorni",
                                    "Prezzo_Copertina","Sconto_Libreria","Valore_Recuperabile"]
                       if c in df_filtered.columns]
             df_rendere_sorted = df_filtered[cols_r].sort_values("Valore_Recuperabile", ascending=False).copy()
             if "Data_Fatturazione" in df_rendere_sorted.columns:
                 df_rendere_sorted["Data_Fatturazione"] = df_rendere_sorted["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
-            st.dataframe(df_rendere_sorted, use_container_width=True, hide_index=True,
+            st.dataframe(df_rendere_sorted.rename(columns=COL_DISPLAY),
+                         use_container_width=True, hide_index=True,
                          height=max(150, min(400, 45 + len(df_rendere_sorted) * 35)))
 
             # Export buttons
@@ -1668,13 +1815,13 @@ with tab_radar:
             with col_csv:
                 _clicked_rendere = st.download_button(
                     label="📥 Esporta CSV",
-                    data=sanitize_csv(df_rendere_sorted).to_csv(index=False).encode("utf-8-sig"),
+                    data=sanitize_csv(df_rendere_sorted.rename(columns=COL_DISPLAY)).to_csv(index=False).encode("utf-8-sig"),
                     file_name=f"da_rendere_{DATA_SISTEMA.strftime('%Y%m%d')}.csv",
                     mime="text/csv",
                     use_container_width=True
                 )
             with col_excel:
-                excel_data = export_to_excel_bytes({"Da rendere": df_rendere_sorted})
+                excel_data = export_to_excel_bytes({"Da rendere": df_rendere_sorted.rename(columns=COL_DISPLAY)})
                 st.download_button(
                     label="📊 Esporta Excel",
                     data=excel_data,
@@ -1730,13 +1877,14 @@ with tab_radar:
             empty_state("⏸", "Nessun titolo in rotazione attiva",
                     "Nessun libro nella finestra temporale ha vendite sufficienti.")
         else:
-            cols_t = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
+            cols_t = [c for c in ["Accordo","Titolo","Autore","Editore","ISBN","Data_Fatturazione",
                                    "Giacenza","Vendute_Ultimi_30_Giorni","Prezzo_Copertina"]
                       if c in df_tenere.columns]
             df_tenere_disp = df_tenere[cols_t].sort_values("Vendute_Ultimi_30_Giorni", ascending=False).copy()
             if "Data_Fatturazione" in df_tenere_disp.columns:
                 df_tenere_disp["Data_Fatturazione"] = df_tenere_disp["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
-            st.dataframe(df_tenere_disp, use_container_width=True, hide_index=True,
+            st.dataframe(df_tenere_disp.rename(columns=COL_DISPLAY),
+                         use_container_width=True, hide_index=True,
                          height=max(150, min(400, 45 + len(df_tenere_disp) * 35)))
         st.divider()
 
@@ -1753,13 +1901,14 @@ with tab_radar:
             empty_state("✓", "Nessun invenduto scaduto",
                         "Tutti i titoli rientrano nelle finestre temporali attive.")
         else:
-            cols_s = [c for c in ["Titolo","Autore","Editore","ISBN","Data_Fatturazione",
+            cols_s = [c for c in ["Accordo","Titolo","Autore","Editore","ISBN","Data_Fatturazione",
                                    "Giacenza","Vendute_Ultimi_30_Giorni","Prezzo_Copertina"]
                       if c in df_scaduto.columns]
             df_scaduto_sorted = df_scaduto[cols_s].sort_values("Data_Fatturazione").copy()
             if "Data_Fatturazione" in df_scaduto_sorted.columns:
                 df_scaduto_sorted["Data_Fatturazione"] = df_scaduto_sorted["Data_Fatturazione"].dt.strftime("%d/%m/%Y")
-            st.dataframe(df_scaduto_sorted, use_container_width=True, hide_index=True,
+            st.dataframe(df_scaduto_sorted.rename(columns=COL_DISPLAY),
+                         use_container_width=True, hide_index=True,
                          height=max(150, min(400, 45 + len(df_scaduto_sorted) * 35)))
 
             # Avviso libri scaduti ma ancora in buona rotazione — non vanno svuotati
