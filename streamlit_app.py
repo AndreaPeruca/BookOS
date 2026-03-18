@@ -965,59 +965,55 @@ with st.sidebar:
         st.rerun()
 
     # ── Google Sheets ──────────────────────────────────────────
-    with st.expander("📊 Collega Google Sheets"):
-        st.caption(
-            "Il foglio deve essere condiviso come "
-            "**\"Chiunque con il link può visualizzare\"**."
-        )
-        _sheet_url_input = st.text_input(
-            "URL del foglio",
-            placeholder="https://docs.google.com/spreadsheets/d/…",
-            key="sheet_url_input",
-            label_visibility="collapsed",
-        )
-        if st.button("Carica foglio", key="load_sheets_btn", use_container_width=True):
-            _sheets_csv_url = sheets_url_to_csv_url(_sheet_url_input.strip())
-            if not _sheet_url_input.strip():
-                st.warning("Inserisci l'URL del foglio.")
-            elif _sheets_csv_url is None:
-                st.error(
-                    "URL non riconosciuto. Copia l'URL dalla barra degli indirizzi "
-                    "o dal menu Condividi di Google Sheets."
-                )
-            else:
-                try:
-                    with urllib.request.urlopen(_sheets_csv_url, timeout=15) as _sresp:
-                        _sraw = _sresp.read()
-                    _sdf = load_csv(_sraw)
-                    _sdf = normalize_columns(_sdf)
-                    _smissing = set(SCHEMA_MAGAZZINO) - set(_sdf.columns)
-                    _sm = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', _sheet_url_input)
-                    _sid = _sm.group(1) if _sm else None
-                    if _smissing:
-                        st.session_state["_col_map_df"]      = _sdf
-                        st.session_state["_col_map_missing"] = _smissing
-                        st.session_state["_col_map_file"]    = "google_sheets.csv"
-                    else:
-                        st.session_state["df_mag"]      = _sdf
-                        st.session_state["df_mag_name"] = "Google Sheets"
-                        if _sid:
-                            st.query_params["sheet"] = _sid
-                    st.rerun()
-                except Exception as _se:
-                    st.error(f"Errore nel caricamento: {_se}")
-                    st.caption(
-                        "Verifica che il foglio sia condiviso correttamente "
-                        "e che l'URL sia completo."
-                    )
-        if "sheet" in st.query_params:
-            _bm_id = st.query_params["sheet"]
-            st.success("✓ Foglio collegato")
-            st.caption("Salva questo link come segnalibro per ricaricare il foglio automaticamente:")
-            st.code(
-                f"https://bookos.streamlit.app/?sheet={_bm_id}",
-                language=None,
+    st.markdown('<div class="sb-section-label">o collega Google Sheets</div>', unsafe_allow_html=True)
+    _sheet_url_input = st.text_input(
+        "URL del foglio",
+        placeholder="https://docs.google.com/spreadsheets/d/…",
+        key="sheet_url_input",
+        label_visibility="collapsed",
+    )
+    if st.button("Carica da Sheets", key="load_sheets_btn", use_container_width=True):
+        _sheets_csv_url = sheets_url_to_csv_url(_sheet_url_input.strip())
+        if not _sheet_url_input.strip():
+            st.warning("Inserisci l'URL del foglio.")
+        elif _sheets_csv_url is None:
+            st.error(
+                "URL non riconosciuto. Copia l'URL dalla barra degli indirizzi "
+                "o dal menu Condividi di Google Sheets."
             )
+        else:
+            try:
+                with urllib.request.urlopen(_sheets_csv_url, timeout=15) as _sresp:
+                    _sraw = _sresp.read()
+                _sdf = load_csv(_sraw)
+                _sdf = normalize_columns(_sdf)
+                _smissing = set(SCHEMA_MAGAZZINO) - set(_sdf.columns)
+                _sm = re.search(r'/spreadsheets/d/([a-zA-Z0-9_-]+)', _sheet_url_input)
+                _sid = _sm.group(1) if _sm else None
+                if _smissing:
+                    st.session_state["_col_map_df"]      = _sdf
+                    st.session_state["_col_map_missing"] = _smissing
+                    st.session_state["_col_map_file"]    = "google_sheets.csv"
+                else:
+                    st.session_state["df_mag"]      = _sdf
+                    st.session_state["df_mag_name"] = "Google Sheets"
+                    if _sid:
+                        st.query_params["sheet"] = _sid
+                st.rerun()
+            except Exception as _se:
+                st.error(f"Errore nel caricamento: {_se}")
+                st.caption(
+                    "Verifica che il foglio sia condiviso come "
+                    "\"Chiunque con il link può visualizzare\"."
+                )
+    if "sheet" in st.query_params:
+        _bm_id = st.query_params["sheet"]
+        st.success("✓ Foglio collegato")
+        st.caption("Segnalibro per ricaricare automaticamente:")
+        st.code(
+            f"https://bookos.streamlit.app/?sheet={_bm_id}",
+            language=None,
+        )
 
     # ── Stato dati ───────────────────────────────────────────
     mag_label   = st.session_state.get("df_mag_name", "Magazzino") if mag_ok else "Magazzino"
