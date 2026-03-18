@@ -1228,8 +1228,20 @@ button[data-testid="collapsedControl"] { display: none !important; }
 # ---------------------------------------------------------------------------
 # ECONOMIST CHART STYLE — usato in Analisi storica e Simulatore ordine
 # ---------------------------------------------------------------------------
-def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src="", show_png=True):
-    """Applica lo stile Economist a un oggetto Plotly Figure con animazioni e interattività premium."""
+def _econ(
+    fig, *,
+    title="", subtitle="", ysuffix="", yprefix="", x0=False, src="",
+    transitions: bool = True,
+    dragmode = "box",
+    legend_below: bool = False,
+):
+    """Applica lo stile Economist a un oggetto Plotly Figure.
+
+    Parametri opzionali:
+    - transitions:   abilita animazioni CSS (False per grafici comparativi)
+    - dragmode:      modalità zoom ("box") o disabilitato (False)
+    - legend_below:  posiziona la legenda sotto il grafico invece che sopra
+    """
     try:
         bg_color = "white"
         text_color = "#16130F"
@@ -1243,7 +1255,19 @@ def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src="
             f"<br><span style='font-size:12px;color:{text_secondary};font-weight:400;letter-spacing:0.3px'>{subtitle}</span>"
             if subtitle else ""
         )
-        fig.update_layout(
+
+        legend_cfg = dict(
+            orientation="h", xanchor="left", x=0,
+            font=dict(size=11, color=text_secondary, family="Inter"),
+            bgcolor="rgba(0,0,0,0)", borderwidth=0, itemsizing="constant",
+            tracegroupgap=20,
+        )
+        if legend_below:
+            legend_cfg.update(yanchor="top", y=-0.15)
+        else:
+            legend_cfg.update(yanchor="bottom", y=1.03)
+
+        layout = dict(
             paper_bgcolor=bg_color, plot_bgcolor=bg_color,
             font=dict(family="Inter,'Helvetica Neue',sans-serif", color=text_color, size=12),
             title=dict(
@@ -1251,13 +1275,8 @@ def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src="
                 font=dict(size=16, color=text_color, family="Inter,'Helvetica Neue',sans-serif", weight="bold"),
                 pad=dict(b=12, l=0, t=4),
             ),
-            margin=dict(l=12, r=52, t=88 if title else 28, b=80 if src else 56),
-            legend=dict(
-                orientation="h", yanchor="bottom", y=1.03, xanchor="left", x=0,
-                font=dict(size=11, color=text_secondary, family="Inter"),
-                bgcolor="rgba(0,0,0,0)", borderwidth=0, itemsizing="constant",
-                tracegroupgap=20,
-            ),
+            margin=dict(l=12, r=52, t=88 if title else 28, b=110 if (src and legend_below) else 80 if src else 56),
+            legend=legend_cfg,
             xaxis=dict(
                 showgrid=False, showline=True, linecolor=border_color, linewidth=1.2,
                 tickfont=dict(size=11, color=text_secondary, family="Inter"),
@@ -1277,10 +1296,13 @@ def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src="
                 namelength=-1, align="left",
             ),
             hovermode="x unified",
-            dragmode="box",
-            transition=dict(duration=500, easing="cubic-in-out"),
+            dragmode=dragmode,
             showlegend=True,
         )
+        if transitions:
+            layout["transition"] = dict(duration=500, easing="cubic-in-out")
+
+        fig.update_layout(**layout)
 
         # Aggiorna tutte le tracce con animazioni e stili migliorati
         for trace in fig.data:
@@ -2986,55 +3008,6 @@ with tab_usato:
 # ===========================================================================
 with tab_storico:
 
-    # ── Economist-style layout helper ────────────────────────────────────────
-    def _econ(fig, *, title="", subtitle="", ysuffix="", yprefix="", x0=False, src=""):
-        """Applica lo stile Economist a un oggetto Plotly Figure."""
-        title_html = (f"<b>{title}</b>" if title else "") + (
-            f"<br><span style='font-size:11px;color:#5C5852;font-weight:400'>{subtitle}</span>"
-            if subtitle else ""
-        )
-        fig.update_layout(
-            paper_bgcolor="white", plot_bgcolor="white",
-            font=dict(family="Inter,'Helvetica Neue',sans-serif", color="#16130F", size=12),
-            title=dict(
-                text=title_html, x=0, xanchor="left",
-                font=dict(size=15, color="#16130F", family="Inter,'Helvetica Neue',sans-serif"),
-                pad=dict(b=8, l=0),
-            ),
-            margin=dict(l=8, r=48, t=(90 if subtitle else 64) if title else 24, b=110 if src else 90),
-            legend=dict(
-                orientation="h", yanchor="top", y=-0.15, xanchor="left", x=0,
-                font=dict(size=11, color="#5C5852"),
-                bgcolor="rgba(0,0,0,0)", borderwidth=0, itemsizing="constant",
-            ),
-            xaxis=dict(
-                showgrid=False, showline=True, linecolor="#D5D0CB", linewidth=1,
-                tickfont=dict(size=11, color="#5C5852"),
-                ticks="outside", ticklen=3, tickcolor="#D5D0CB", title=None,
-            ),
-            yaxis=dict(
-                showgrid=True, gridcolor="#F0EBE5", gridwidth=1,
-                showline=False, tickfont=dict(size=11, color="#5C5852"),
-                ticksuffix=ysuffix, tickprefix=yprefix, title=None,
-                zeroline=x0, zerolinecolor="#C0BBB5", zerolinewidth=1.5,
-            ),
-            hoverlabel=dict(
-                bgcolor="#16130F", font_color="#F5F1EC",
-                font_size=11, bordercolor="#16130F",
-            ),
-            hovermode="x unified",
-            # Zoom e pan disabilitati — hover tooltip preservato.
-            # L'utente non può bloccarsi in uno stato di zoom senza via d'uscita.
-            dragmode=False,
-        )
-        if src:
-            fig.add_annotation(
-                text=f"<i>{src}</i>", xref="paper", yref="paper",
-                x=0, y=-0.20, showarrow=False,
-                font=dict(size=9, color="#9B9590"), xanchor="left",
-            )
-        return fig
-
     # ── Page header ──────────────────────────────────────────────────────────
     page_header(
         "Analisi storica",
@@ -3405,6 +3378,7 @@ with tab_storico:
                                 title="Il valore del magazzino nel tempo",
                                 subtitle="Valore a costo dei libri in giacenza · € · Crescita = accumulo invenduto",
                                 src="Elaborazione su dati del gestionale",
+                                transitions=False, dragmode=False, legend_below=True,
                             )
                             max_val = df_agg["Valore_Mag"].max()
                             fig_val.update_yaxes(
@@ -3484,6 +3458,7 @@ with tab_storico:
                                 ),
                                 ysuffix="%",
                                 src="Elaborazione su dati del gestionale · Soglie: AIE/ISTAT 2022",
+                                transitions=False, dragmode=False, legend_below=True,
                             )
                             fig_st.update_yaxes(rangemode="tozero")
                             fig_st.update_layout(height=450)
@@ -3552,6 +3527,7 @@ with tab_storico:
                                     "Intensità colore = frequenza del fermo"
                                 ),
                                 src="Elaborazione su dati del gestionale",
+                                transitions=False, dragmode=False, legend_below=True,
                             )
                             fig_fermi.update_xaxes(tickprefix="€ ", tickformat=",.0f")
                             fig_fermi.update_layout(
@@ -3651,6 +3627,7 @@ with tab_storico:
                                 ),
                                 x0=True,
                                 src="Elaborazione su dati del gestionale",
+                                transitions=False, dragmode=False, legend_below=True,
                             )
                             fig_delta.update_xaxes(ticksuffix="pp")
                             fig_delta.update_layout(
