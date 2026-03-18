@@ -148,8 +148,8 @@ def load_inventory() -> list:
             if len(valid) < len(data):
                 logging.warning(f"inventario_usato.json: scartate {len(data) - len(valid)} voci non valide")
             return valid
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"load_inventory: {e}")
     return []
 
 def save_inventory(inv: list) -> None:
@@ -157,8 +157,9 @@ def save_inventory(inv: list) -> None:
         INVENTORY_FILE.write_text(
             json.dumps(inv, ensure_ascii=False, indent=2), encoding="utf-8"
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"save_inventory: {e}")
+        st.toast("⚠️ Salvataggio inventario non riuscito.", icon="⚠️")
 
 
 def load_preferences() -> dict:
@@ -166,8 +167,8 @@ def load_preferences() -> dict:
     try:
         if PREFERENCES_FILE.exists():
             return json.loads(PREFERENCES_FILE.read_text(encoding="utf-8"))
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"load_preferences: {e}")
     return {}
 
 
@@ -177,8 +178,8 @@ def save_preferences(prefs: dict) -> None:
         PREFERENCES_FILE.write_text(
             json.dumps(prefs, ensure_ascii=False, indent=2), encoding="utf-8"
         )
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"save_preferences: {e}")
 
 
 @st.cache_data(show_spinner=False)
@@ -186,8 +187,8 @@ def load_storico() -> list:
     try:
         if STORICO_FILE.exists():
             return json.loads(STORICO_FILE.read_text(encoding="utf-8"))
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"load_storico: {e}")
     return []
 
 
@@ -213,8 +214,8 @@ def save_decision_log(action_type: str, titoli: list, n_copie: int, valore: floa
             json.dumps(storico, ensure_ascii=False, indent=2), encoding="utf-8"
         )
         load_storico.clear()
-    except Exception:
-        pass
+    except Exception as e:
+        logging.error(f"save_decision_log: {e}")
 
 # ---------------------------------------------------------------------------
 # ISBN LOOKUP — OpenLibrary (gratuito, no API key)
@@ -247,8 +248,8 @@ def _isbn_fetch_api(isbn_clean: str) -> dict:
                 autore = autori[0]["name"] if autori else ""
                 if titolo:
                     return {"titolo": titolo, "autore": autore}
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"OpenLibrary lookup {cand}: {e}")
 
     # 2. Fallback: Google Books (migliore copertura edizioni italiane)
     for cand in candidates:
@@ -265,8 +266,8 @@ def _isbn_fetch_api(isbn_clean: str) -> dict:
                 autore = autori[0] if autori else ""
                 if titolo:
                     return {"titolo": titolo, "autore": autore}
-        except Exception:
-            pass
+        except Exception as e:
+            logging.warning(f"Google Books lookup {cand}: {e}")
 
     return {}
 
@@ -529,8 +530,8 @@ def get_file_stats(df: pd.DataFrame, schema: frozenset) -> dict:
                     min_date = valid_dates.min()
                     max_date = valid_dates.max()
                     date_range = f"{min_date.strftime('%d/%m/%y')} → {max_date.strftime('%d/%m/%y')}"
-            except Exception:
-                pass
+            except Exception as e:
+                logging.warning(f"get_file_stats date range: {e}")
 
         # Quality score (0-100)
         quality = (col_coverage * 0.3) + (non_null_pct * 0.4) + ((len(valid_dates) / max(1, len(df))) * 20 if "Data_Fatturazione" in df.columns else 20)
@@ -1619,8 +1620,8 @@ with tab_dash:
     </div>
   </div>
 </div>""", unsafe_allow_html=True)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.error(f"Dashboard segnali magazzino: {e}")
 
         # ── Prossimi passi ──────────────────────────────────────────────────
         st.divider()
@@ -1647,8 +1648,8 @@ with tab_dash:
     🔵 <strong>Simulatore</strong> — stima quante copie ordinare del prossimo titolo
   </div>
 </div>""", unsafe_allow_html=True)
-        except Exception:
-            pass
+        except Exception as e:
+            logging.error(f"Dashboard prossimi passi: {e}")
 
         # ── Sezione 2: File caricato ────────────────────────────────────────
         st.divider()
