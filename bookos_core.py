@@ -25,6 +25,8 @@ def processa_magazzino(
     finestra_start: date,
     finestra_end: date,
     rot_min: int,
+    costo_spedizione: float = 0.0,
+    costo_per_copia: float = 0.0,
 ) -> dict:
     """
     Classifica i titoli del magazzino in tre categorie:
@@ -32,7 +34,11 @@ def processa_magazzino(
     - tenere:   nella finestra di resa con vendite >= rot_min
     - scaduto:  fatturati prima di soglia_invenduto
 
-    Restituisce un dict con chiavi: df, scaduto, tenere, rendere, warnings.
+    costo_spedizione: costo fisso per spedizione dell'intera partita di resa (€)
+    costo_per_copia:  costo variabile per ogni copia resa (€/copia, es. imballaggio)
+
+    Restituisce un dict con chiavi: df, scaduto, tenere, rendere, warnings, auto_corrections,
+    costo_spedizione, costo_per_copia.
     """
     df = df_raw.copy()
     n_totale = len(df)
@@ -96,6 +102,11 @@ def processa_magazzino(
     df_rendere["Valore_Recuperabile"] = (
         (df_rendere["Prezzo_Copertina"] - df_rendere["Sconto_Libreria"]) * df_rendere["Giacenza"]
     )
+    # Valore netto per riga: deduce il costo variabile (imballaggio, handling)
+    df_rendere["Valore_Recuperabile_Netto"] = (
+        df_rendere["Valore_Recuperabile"] - costo_per_copia * df_rendere["Giacenza"]
+    ).clip(lower=0)
+
     return {
         "df": df,
         "scaduto": df_scaduto,
@@ -103,4 +114,6 @@ def processa_magazzino(
         "rendere": df_rendere,
         "warnings": warnings_list,
         "auto_corrections": auto_corrections,
+        "costo_spedizione": costo_spedizione,
+        "costo_per_copia": costo_per_copia,
     }

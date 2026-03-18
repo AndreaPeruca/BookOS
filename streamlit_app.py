@@ -1120,6 +1120,9 @@ with tab_radar:
         f"Individua i titoli da rendere e quelli a rischio di fermo — aggiornato al {DATA_SISTEMA.strftime('%d/%m/%Y')}.",
     )
     df_mag = st.session_state.get("df_mag")
+    costo_spedizione_ui = 0.0
+    costo_per_copia_ui  = 0.0
+    ha_costi            = False
     if df_mag is None:
         empty_state(
             "🔍", "Nessun gestionale caricato",
@@ -1171,10 +1174,27 @@ with tab_radar:
             soglia_fs   = soglia_inv
             soglia_fe   = soglia_fs + timedelta(days=int(_giorni_finestra))
             rot_min_ui  = int(_rot_min)
-    
+
+        st.markdown("**Costi di spedizione resa**")
+        _cs1, _cs2 = st.columns(2)
+        costo_spedizione_ui = _cs1.number_input(
+            "Costo fisso per spedizione (€)",
+            min_value=0.0, max_value=500.0, value=0.0, step=1.0,
+            help="Costo una-tantum per inviare la partita al distributore (es. €15 per il corriere).",
+        )
+        costo_per_copia_ui = _cs2.number_input(
+            "Costo per copia (€)",
+            min_value=0.0, max_value=10.0, value=0.0, step=0.10,
+            help="Costo variabile per ogni copia resa (es. €0.50 per imballaggio e handling).",
+        )
+
     if df_mag is not None:
         with st.spinner("🔄 Analisi magazzino in corso…"):
-            seg = processa_magazzino(df_mag, soglia_inv, soglia_fs, soglia_fe, rot_min_ui)
+            seg = processa_magazzino(
+                df_mag, soglia_inv, soglia_fs, soglia_fe, rot_min_ui,
+                costo_spedizione=costo_spedizione_ui,
+                costo_per_copia=costo_per_copia_ui,
+            )
 
         for msg in seg.get("auto_corrections", []):
             st.info(f"🔧 **Correzione automatica** — {msg}")
@@ -1282,14 +1302,27 @@ with tab_radar:
                 st.info(f"📊 Filtri applicati: {n_filtrati} di {n_totali} titoli ({((n_filtrati/n_totali)*100):.0f}%)")
 
         totale_recuperabile = df_rendere["Valore_Recuperabile"].sum()
+        totale_netto = (
+            df_rendere["Valore_Recuperabile_Netto"].sum()
+            - seg["costo_spedizione"]
+        ) if "Valore_Recuperabile_Netto" in df_rendere.columns else totale_recuperabile
+        totale_netto = max(0.0, totale_netto)
+        ha_costi = (costo_spedizione_ui > 0 or costo_per_copia_ui > 0)
 
         st.divider()
         section("Riepilogo analisi")
         c1, c2, c3 = st.columns(3)
         with c1:
-            metric_card("Liquidità recuperabile", fmt_euro(totale_recuperabile),
-                        "positive" if totale_recuperabile > 0 else "neutral",
-                        f"{len(df_rendere)} titoli da rendere")
+            if ha_costi:
+                metric_card(
+                    "Liquidità recuperabile (lordo)", fmt_euro(totale_recuperabile),
+                    "positive" if totale_recuperabile > 0 else "neutral",
+                    f"{len(df_rendere)} titoli · netto spedizione: {fmt_euro(totale_netto)}",
+                )
+            else:
+                metric_card("Liquidità recuperabile", fmt_euro(totale_recuperabile),
+                            "positive" if totale_recuperabile > 0 else "neutral",
+                            f"{len(df_rendere)} titoli da rendere")
         with c2:
             valore_scaduto = (df_scaduto["Prezzo_Copertina"] - df_scaduto["Sconto_Libreria"]) * df_scaduto["Giacenza"]
             metric_card("Invenduto scaduto", str(len(df_scaduto)),
@@ -1426,13 +1459,27 @@ with tab_radar:
                 rec  = df_piano[df_piano["_Stato"] == "Da rendere"]["_costo_opp"].sum()
                 imm  = df_piano[df_piano["_Stato"] == "Scaduto — fermo"]["_costo_opp"].sum()
                 rc1, rc2 = st.columns(2)
-                rc1.metric("Cassa recuperabile da rese", fmt_euro(rec))
+                if ha_costi:
+                    rc1.metric(
+                        "Cassa recuperabile (lordo)",
+                        fmt_euro(rec),
+                        delta=f"netto: {fmt_euro(totale_netto)}",
+                        delta_color="normal",
+                    )
+                else:
+                    rc1.metric("Cassa recuperabile da rese", fmt_euro(rec))
                 rc2.metric("Cassa immobilizzata in invenduto fermo", fmt_euro(imm))
-                st.caption(
+                caption = (
                     "La **cassa recuperabile** è il valore a costo dei libri ancora rendibili. "
                     "La **cassa immobilizzata** è il costo dei titoli fermi fuori finestra — "
                     "non recuperabile via resa, solo via vendita o promozione."
                 )
+                if ha_costi:
+                    caption += (
+                        f" Il valore **netto** deduce €{costo_per_copia_ui:.2f}/copia "
+                        f"e €{costo_spedizione_ui:.2f} di spedizione."
+                    )
+                st.caption(caption)
             else:
                 st.info("Nessun titolo con giacenza attiva da analizzare.")
 

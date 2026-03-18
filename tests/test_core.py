@@ -195,6 +195,49 @@ class TestParsingDate:
 # processa_magazzino — auto-correzione sconto come percentuale
 # ---------------------------------------------------------------------------
 
+# ---------------------------------------------------------------------------
+# processa_magazzino — costi di spedizione
+# ---------------------------------------------------------------------------
+
+class TestCostiSpedizione:
+    def _row(self, **kwargs):
+        return make_df([{
+            "Data_Fatturazione": d(160),
+            "Vendute_Ultimi_30_Giorni": 0,
+            "Giacenza": 10,
+            "Prezzo_Copertina": 20.0,
+            "Sconto_Libreria": 3.6,
+            **kwargs,
+        }])
+
+    def test_senza_costi_netto_uguale_lordo(self):
+        """Con costi = 0, Valore_Recuperabile_Netto == Valore_Recuperabile."""
+        res = processa_magazzino(self._row(), *default_params())
+        lordo = res["rendere"]["Valore_Recuperabile"].iloc[0]
+        netto = res["rendere"]["Valore_Recuperabile_Netto"].iloc[0]
+        assert netto == pytest.approx(lordo)
+
+    def test_costo_per_copia_dedotto_per_riga(self):
+        """costo_per_copia viene moltiplicato per Giacenza e dedotto dal lordo."""
+        soglia_inv, fs, fe, rot_min = default_params()
+        res = processa_magazzino(self._row(), soglia_inv, fs, fe, rot_min, costo_per_copia=0.5)
+        # lordo = (20 - 3.6) * 10 = 164.0
+        # netto = 164.0 - 0.5 * 10 = 159.0
+        assert res["rendere"]["Valore_Recuperabile_Netto"].iloc[0] == pytest.approx(159.0)
+
+    def test_costo_spedizione_salvato_nel_risultato(self):
+        """costo_spedizione fisso viene restituito nel dict per uso nel totale UI."""
+        soglia_inv, fs, fe, rot_min = default_params()
+        res = processa_magazzino(self._row(), soglia_inv, fs, fe, rot_min, costo_spedizione=15.0)
+        assert res["costo_spedizione"] == pytest.approx(15.0)
+
+    def test_valore_netto_non_negativo(self):
+        """Valore_Recuperabile_Netto non scende sotto zero (clip)."""
+        soglia_inv, fs, fe, rot_min = default_params()
+        res = processa_magazzino(self._row(), soglia_inv, fs, fe, rot_min, costo_per_copia=100.0)
+        assert res["rendere"]["Valore_Recuperabile_Netto"].iloc[0] == pytest.approx(0.0)
+
+
 class TestAutoCorrezioneSconto:
     def test_sconto_percentuale_viene_autocorretto(self):
         """Sconto_Libreria > 5 (mediana) → auto-convertito in euro, segnalato in auto_corrections."""
