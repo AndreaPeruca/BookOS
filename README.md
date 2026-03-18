@@ -1,77 +1,81 @@
 # BookStore OS
 
-Toolkit completo per librai indipendenti. Gestione intelligente del magazzino con analisi predittiva e simulazione ordini.
+Toolkit per librai indipendenti italiani. Gestione magazzino, analisi resi, costo scaffale, calcolatore margini, storico comparativo e simulatore ordini.
 
-## Features
+## Sezioni
 
-### Radar Salva-Cassa
-Analizza il tuo magazzino per identificare libri invenduti e con rotazione critica. Calcola il valore bloccato in giacenza e ottimizza le decisioni di resa.
+### Analisi Resi
+Identifica i titoli da rendere al distributore prima che la finestra di resa si chiuda. Classifica il magazzino in *da rendere*, *da tenere* e *invenduto scaduto* in base a soglie configurabili. Calcola il valore recuperabile lordo e netto (al netto dei costi di spedizione). Esclude automaticamente titoli scolastici o stagionali tramite filtro per editore e parole chiave.
+
+### Costo Scaffale
+Calcola il costo reale di tenere un libro in magazzino — affitto, utenze, personale — ripartito per copia. Evidenzia i titoli che costano più di quanto rendono.
 
 ### Calcolatore Margine
-Stima il margine lordo reale di un ordine considerando costi operativi (affitto, utenze, personale, altri). Valuta la convenienza di ogni acquisizione.
+Stima il margine lordo reale di un ordine considerando costi operativi. Valuta la convenienza di ogni acquisizione prima di ordinarla.
 
 ### Gestione Usato
-Gestisci il tuo inventario di libri usati con sistema "conto vendita". Traccia prezzi, rotazione e marginalità con semplicità.
+Inventario per libri usati in conto vendita. Traccia prezzi, rotazione e marginalità.
 
-###  Analisi Storica
-Confronta snapshot storici del tuo magazzino per monitorare trend di vendita e giacenza. Identifica pattern stagionali e opportunità.
+### Analisi Storica
+Confronta 2 o più snapshot del gestionale per monitorare l'andamento del magazzino nel tempo. Identifica titoli cronicamente fermi, variazioni per editore e proiezione della tendenza in linguaggio semplice.
 
-###  Simulatore Ordine
-Stima quante copie ordinare di un titolo nuovo, basandosi sulla rotazione storica di titoli dello stesso editore.
-
-## Requisiti Dati
-
-I CSV devono contenere queste colonne:
-- **Titolo** - Nome del libro
-- **Autore** - Autore del libro
-- **Editore** - Casa editrice
-- **ISBN** - Codice ISBN
-- **Data_Fatturazione** - Data di acquisto (gg/mm/aaaa)
-- **Giacenza** - Copie in magazzino
-- **Vendute_Ultimi_30_Giorni** - Vendite ultimi 30 giorni
-- **Prezzo_Copertina** - Prezzo di listino (€)
-- **Sconto_Libreria** - Sconto editore applicato (€)
-
-## Installazione
-
-```bash
-pip install -r requirements.txt
-python -m streamlit run streamlit_app.py
-```
-
-## Dipendenze
-
-- streamlit >= 1.32.0
-- pandas >= 2.2.0
-- plotly >= 5.22.0
-- anthropic >= 0.25.0
-
-## Utilizzo Rapido
-
-1. **Carica il CSV** dal tuo gestionale (Radar Salva-Cassa)
-2. **Seleziona la sezione** dal dropdown in alto a sinistra
-3. **Analizza i dati** e prendi decisioni informate
-4. **Esporta i risultati** se necessario
-
-## Deploy su Streamlit Cloud
-
-```bash
-git push origin main
-```
-
-L'app si deploya automaticamente su: https://share.streamlit.io
-
-## Note Tecniche
-
-- **Cache dati** per performance ottimale
-- **Validazione robusta** dei file CSV
-- **Grafici interattivi** con Plotly (stile Economist)
-- **Responsive design** per desktop
-
-## 📧 Support
-
-Per problemi o suggerimenti, consulta la documentazione del codice.
+### Simulatore Ordine
+Stima quante copie ordinare di un titolo nuovo basandosi sulla rotazione storica di titoli dello stesso editore.
 
 ---
 
-**BookStore OS v3.1** - Toolkit per librai indipendenti
+## Formato CSV richiesto
+
+Colonne richieste (i nomi esatti possono variare — l'app include una UI di mappatura):
+
+| Campo canonico | Esempi di nomi alternativi accettati |
+|---|---|
+| Titolo | titolo |
+| Autore | autore, autori |
+| Editore | editore |
+| ISBN | isbn, ean, codice_isbn |
+| Data_Fatturazione | data_acquisto, data_carico, data_ordine |
+| Giacenza | stock, quantita, copie |
+| Vendute_Ultimi_30_Giorni | vendite, vendite_mese, pezzi_venduti |
+| Prezzo_Copertina | prezzo, pvc, listino |
+| Sconto_Libreria | sconto, sconto_lib |
+
+Se il gestionale usa nomi diversi da quelli riconosciuti automaticamente, l'app mostra una schermata di abbinamento manuale.
+
+---
+
+## Architettura
+
+```
+streamlit_app.py   — UI Streamlit
+bookos_core.py     — logica di business pura (senza dipendenze Streamlit)
+styles.css         — design system
+tests/
+  test_core.py     — 27 test unitari per bookos_core
+requirements.txt
+```
+
+La separazione tra `bookos_core.py` e `streamlit_app.py` permette di testare la logica di classificazione magazzino indipendentemente dalla UI.
+
+---
+
+## Installazione locale
+
+```bash
+pip install -r requirements.txt
+streamlit run streamlit_app.py
+```
+
+## Test
+
+```bash
+pytest tests/
+```
+
+## Deploy
+
+L'app è deployata su Streamlit Cloud. Ogni push su `main` triggera il deploy automatico.
+
+---
+
+Fatto da [Andrea Peruca](https://www.linkedin.com/in/andreaperuca) — per feedback o collaborazioni, scrivimi su LinkedIn.
