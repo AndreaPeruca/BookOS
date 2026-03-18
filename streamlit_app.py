@@ -965,7 +965,7 @@ with st.sidebar:
         st.rerun()
 
     # ── Google Sheets ──────────────────────────────────────────
-    with st.expander("🔗 Collega Google Sheets"):
+    with st.expander("📊 Collega Google Sheets"):
         st.caption(
             "Il foglio deve essere condiviso come "
             "**\"Chiunque con il link può visualizzare\"**."
