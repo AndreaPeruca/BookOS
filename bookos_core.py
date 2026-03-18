@@ -72,13 +72,19 @@ def processa_magazzino(
     for col in ["Giacenza", "Vendute_Ultimi_30_Giorni", "Prezzo_Copertina", "Sconto_Libreria"]:
         df[col] = parse_numeric(df[col])
 
+    auto_corrections: list[str] = []
+
     if len(df) > 0:
         median_sconto = df["Sconto_Libreria"].median()
         if median_sconto > 5:
-            warnings_list.append(
-                f"Sconto_Libreria: i valori sembrano essere in percentuale (mediana: {median_sconto:.1f}). "
-                "Questa colonna deve contenere il valore assoluto in euro (es. 3.42, non 19). "
-                "Il valore recuperabile calcolato potrebbe essere errato."
+            # I valori sembrano percentuali (es. 18 invece di 3.42).
+            # Convertiamo automaticamente: sconto_euro = prezzo_copertina × sconto% / 100
+            df["Sconto_Libreria"] = df["Prezzo_Copertina"] * df["Sconto_Libreria"] / 100
+            new_median = df["Sconto_Libreria"].median()
+            auto_corrections.append(
+                f"Sconto_Libreria: rilevati valori in percentuale (mediana: {median_sconto:.1f}%) — "
+                f"convertiti automaticamente in euro (mediana risultante: €{new_median:.2f}). "
+                "Verifica che i calcoli siano corretti."
             )
 
     fat        = df["Data_Fatturazione"].dt.date
@@ -96,4 +102,5 @@ def processa_magazzino(
         "tenere": df_tenere,
         "rendere": df_rendere,
         "warnings": warnings_list,
+        "auto_corrections": auto_corrections,
     }

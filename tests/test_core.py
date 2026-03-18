@@ -192,20 +192,38 @@ class TestParsingDate:
 
 
 # ---------------------------------------------------------------------------
-# processa_magazzino — warning sconto come percentuale
+# processa_magazzino — auto-correzione sconto come percentuale
 # ---------------------------------------------------------------------------
 
-class TestWarningScontoPercentuale:
-    def test_sconto_percentuale_genera_warning(self):
-        """Sconto_Libreria > 5 (mediana) → warning che suggerisce valore assoluto."""
+class TestAutoCorrezioneSconto:
+    def test_sconto_percentuale_viene_autocorretto(self):
+        """Sconto_Libreria > 5 (mediana) → auto-convertito in euro, segnalato in auto_corrections."""
         df = make_df([{
             "Data_Fatturazione": d(160),
-            "Sconto_Libreria": 19,   # percentuale, non valore assoluto
+            "Sconto_Libreria": 18,       # 18% — valore tipico da gestionale errato
+            "Prezzo_Copertina": 20.0,
         }])
         res = processa_magazzino(df, *default_params())
-        assert any("percentuale" in w for w in res["warnings"])
+        assert len(res["auto_corrections"]) == 1
+        assert "convertiti automaticamente" in res["auto_corrections"][0]
 
-    def test_sconto_corretto_nessun_warning(self):
+    def test_valore_recuperabile_corretto_dopo_autocorrezione(self):
+        """Dopo auto-correzione, Valore_Recuperabile usa lo sconto convertito in euro."""
+        df = make_df([{
+            "Data_Fatturazione": d(160),
+            "Sconto_Libreria": 18,       # 18%
+            "Prezzo_Copertina": 20.0,
+            "Giacenza": 10,
+            "Vendute_Ultimi_30_Giorni": 0,
+        }])
+        res = processa_magazzino(df, *default_params())
+        # sconto_euro = 20.0 * 18 / 100 = 3.60
+        # valore = (20.0 - 3.60) * 10 = 164.0
+        assert res["rendere"]["Valore_Recuperabile"].iloc[0] == pytest.approx(164.0)
+
+    def test_sconto_corretto_nessuna_autocorrezione(self):
+        """Sconto già in euro (mediana ≤ 5) → nessuna auto-correzione."""
         df = make_df([{"Data_Fatturazione": d(160), "Sconto_Libreria": 3.6}])
         res = processa_magazzino(df, *default_params())
+        assert len(res["auto_corrections"]) == 0
         assert not any("percentuale" in w for w in res["warnings"])

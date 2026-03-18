@@ -1176,6 +1176,8 @@ with tab_radar:
         with st.spinner("🔄 Analisi magazzino in corso…"):
             seg = processa_magazzino(df_mag, soglia_inv, soglia_fs, soglia_fe, rot_min_ui)
 
+        for msg in seg.get("auto_corrections", []):
+            st.info(f"🔧 **Correzione automatica** — {msg}")
         for msg in seg["warnings"]:
             st.warning(f"⚠️ {msg}")
 
