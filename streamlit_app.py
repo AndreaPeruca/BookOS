@@ -847,6 +847,20 @@ section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] {
     font-family: var(--font-sans);
     transition: color var(--t) !important;
 }
+.sb-credits {
+    margin-top: .6rem;
+    padding-top: .6rem;
+    border-top: 1px solid #1E1E1C;
+    font-size: .67rem; color: #4A4846 !important;
+    font-family: var(--font-sans);
+    line-height: 1.6;
+}
+.sb-credits a {
+    color: #7A7674 !important;
+    text-decoration: none;
+    transition: color var(--t);
+}
+.sb-credits a:hover { color: #EDEAE5 !important; }
 
 
 section[data-testid="stSidebar"] [data-testid="stRadio"] label:has(input:checked) {
@@ -1569,7 +1583,11 @@ with st.sidebar:
   </div>
 </div>""", unsafe_allow_html=True)
 
-    st.markdown('<div class="sb-version">v3.1</div>', unsafe_allow_html=True)
+    st.markdown("""<div class="sb-version">v3.1</div>
+<div class="sb-credits">
+  Fatto da <a href="https://www.linkedin.com/in/andreaperuca" target="_blank">Andrea Peruca</a><br>
+  Per feedback o collaborazioni, scrivimi su LinkedIn.
+</div>""", unsafe_allow_html=True)
 
 get_or_load("df_mag", mag_file_sb, SCHEMA_MAGAZZINO, "Gestionale magazzino")
 mag_ok = st.session_state["df_mag"] is not None
