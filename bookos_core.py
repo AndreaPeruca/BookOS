@@ -68,8 +68,8 @@ def processa_magazzino(
         )
     df = df.dropna(subset=["Data_Fatturazione"])
 
-    oggi = date.today()
-    n_future = (df["Data_Fatturazione"].dt.date > oggi).sum()
+    oggi_ts  = pd.Timestamp(date.today())
+    n_future = (df["Data_Fatturazione"] > oggi_ts).sum()
     if n_future > 0:
         warnings_list.append(
             f"{n_future} riga/e ha una Data_Fatturazione nel futuro — verifica i dati del gestionale."
@@ -93,9 +93,12 @@ def processa_magazzino(
                 "Verifica che i calcoli siano corretti."
             )
 
-    fat        = df["Data_Fatturazione"].dt.date
-    df_scaduto = df[fat < soglia_invenduto].copy()
-    df_finestra = df[(fat >= finestra_start) & (fat <= finestra_end)].copy()
+    ts_soglia_inv = pd.Timestamp(soglia_invenduto)
+    ts_fs         = pd.Timestamp(finestra_start)
+    ts_fe         = pd.Timestamp(finestra_end)
+    fat           = df["Data_Fatturazione"]
+    df_scaduto  = df[fat < ts_soglia_inv].copy()
+    df_finestra = df[(fat >= ts_fs) & (fat <= ts_fe)].copy()
     df_finestra = df_finestra[df_finestra["Giacenza"] > 0]
     df_tenere  = df_finestra[df_finestra["Vendute_Ultimi_30_Giorni"] >= rot_min].copy()
     df_rendere = df_finestra[df_finestra["Vendute_Ultimi_30_Giorni"] < rot_min].copy()
