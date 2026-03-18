@@ -1592,61 +1592,30 @@ with tab_dash:
 
         # ── Sezione 2: File caricato ────────────────────────────────────────
         st.divider()
-        section("📂 File Caricato")
-
-        # Calcola statistiche file
         file_stats = get_file_stats(df_mag, frozenset(SCHEMA_MAGAZZINO))
-        file_name = st.session_state.get("df_mag_name", "N/A")
-        colors = THEME_COLORS
+        file_name  = st.session_state.get("df_mag_name", "N/A")
+        quality_pct = file_stats["quality"]
 
-        # Card principale con info file
-        col1, col2, col3 = st.columns([2, 1, 1])
-        with col1:
-            st.markdown(
-                f"<div style=\"color: {colors['text']}; font-size: 14px; padding: 14px; background: {colors['bg_card']}; border-radius: 8px; border: 1px solid {colors['border']}; border-left: 4px solid {colors['accent']};\">"
-                f"<div><strong style=\"font-size: 15px;\">📄 {file_name}</strong></div>"
-                f"<div style=\"margin-top: 8px; font-size: 13px; color: {colors['text_secondary']};\"><strong>{file_stats['total_rows']:,}</strong> righe</div>"
-                f"<div style=\"margin-top: 4px; font-size: 12px; color: {colors['text_muted']};\">(Dati: {file_stats['date_range']})</div>"
-                f"</div>", unsafe_allow_html=True
-            )
+        if quality_pct >= 85:
+            st.success(f"✅ **{file_name}** caricato correttamente · {file_stats['total_rows']:,} righe")
+        elif quality_pct >= 70:
+            st.warning(f"⚠️ **{file_name}** caricato con avvisi · {file_stats['total_rows']:,} righe")
+        else:
+            st.error(f"❌ **{file_name}** — file con problemi · {file_stats['total_rows']:,} righe")
 
-        with col2:
-            # Quality score
-            quality_pct = file_stats["quality"]
-            quality_color = "#22C55E" if quality_pct >= 90 else "#F59E0B" if quality_pct >= 70 else "#EF4444"
-            st.markdown(
-                f"<div style=\"text-align: center; padding: 14px; background: {colors['bg_card']}; border-radius: 8px; border: 1px solid {colors['border']};\">"
-                f"<div style=\"font-size: 28px; margin-bottom: 2px;\">{file_stats['rating_icon']}</div>"
-                f"<div style=\"font-size: 11px; color: {colors['text_muted']}; text-transform: uppercase; letter-spacing: 0.05em;\">Qualità</div>"
-                f"<div style=\"font-size: 13px; font-weight: 600; color: {colors['text']}; margin-top: 4px;\">{file_stats['rating']}</div>"
-                f"<div style=\"font-size: 12px; color: {quality_color}; margin-top: 3px;\">{quality_pct:.0f}%</div>"
-                f"</div>", unsafe_allow_html=True
-            )
+        if quality_pct < 85 and file_stats["missing_cols"]:
+            st.caption(f"Colonne mancanti o incomplete: {', '.join(sorted(file_stats['missing_cols']))}")
 
-        with col3:
-            # Coverage info
-            col_cov = file_stats["col_coverage"]
-            st.markdown(
-                f"<div style=\"text-align: center; padding: 14px; background: {colors['bg_card']}; border-radius: 8px; border: 1px solid {colors['border']};\">"
-                f"<div style=\"font-size: 28px; margin-bottom: 2px;\">📊</div>"
-                f"<div style=\"font-size: 11px; color: {colors['text_muted']}; text-transform: uppercase; letter-spacing: 0.05em;\">Colonne</div>"
-                f"<div style=\"font-size: 13px; font-weight: 600; color: {colors['text']}; margin-top: 4px;\">{col_cov:.0f}%</div>"
-                f"<div style=\"font-size: 11px; color: {colors['text_secondary']}; margin-top: 3px;\">Complete</div>"
-                f"</div>", unsafe_allow_html=True
-            )
-
-        # Bottone carica nuovo
-        if st.button("📥 Carica nuovo file", use_container_width=True, key="dashboard_load_btn"):
-            st.info("⬆️ Usa il banner in cima alla pagina per caricare il gestionale")
-
-        # Alert se qualità è bassa
-        if file_stats["quality"] < 70 and file_stats["missing_cols"]:
-            st.warning(f"⚠️ File con possibili problemi. Colonne mancanti: {', '.join(sorted(file_stats['missing_cols']))}")
-        elif file_stats["quality"] < 85:
-            st.info(f"💡 Qualità file: {file_stats['rating']}. Controlla i dati mancanti.")
-
-        st.divider()
-        st.caption("💡 Usa i tab in cima per navigare tra le sezioni — Radar, Scaffale, Margine, Usato, Storico, Simulatore.")
+        with st.expander("🔍 Dettagli file", expanded=False):
+            colors = THEME_COLORS
+            dc1, dc2 = st.columns(2)
+            with dc1:
+                st.caption(f"**Periodo dati:** {file_stats['date_range']}")
+                st.caption(f"**Qualità dati:** {file_stats['rating']} ({quality_pct:.0f}%)")
+            with dc2:
+                st.caption(f"**Copertura colonne:** {file_stats['col_coverage']:.0f}%")
+                if file_stats["missing_cols"]:
+                    st.caption(f"**Mancanti:** {', '.join(sorted(file_stats['missing_cols']))}")
 
     else:
         st.markdown("""<div class="onb-wrap">
