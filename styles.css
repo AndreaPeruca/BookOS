@@ -63,6 +63,13 @@ section[data-testid="stSidebar"] .stMarkdown p {
     transition: color var(--t) !important;
 }
 
+/* Le icone Material (es. upload, frecce) sono <span> dentro la sidebar:
+   la regola font-family sopra le rompe (mostrano il nome testuale invece
+   del glifo, es. "upload" invece dell'icona). Ripristina il font icone. */
+section[data-testid="stSidebar"] [data-testid="stIconMaterial"] {
+    font-family: "Material Symbols Rounded" !important;
+}
+
 
 .sb-brand {
     display: flex; align-items: center; gap: .7rem;
