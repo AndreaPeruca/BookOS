@@ -17,7 +17,7 @@ import streamlit as st
 import pandas as pd
 from datetime import date, timedelta, datetime
 from urllib.parse import quote_plus
-from bookos_core import parse_numeric, processa_magazzino as _pm_impl
+from bookos_core import parse_numeric, parse_date_fatturazione, processa_magazzino as _pm_impl
 
 processa_magazzino = st.cache_data(show_spinner=False)(_pm_impl)
 
@@ -578,7 +578,7 @@ def get_file_stats(df: pd.DataFrame, schema: frozenset) -> dict:
         valid_dates = pd.Series([], dtype="datetime64[ns]")
         if "Data_Fatturazione" in df.columns:
             try:
-                dates = pd.to_datetime(df["Data_Fatturazione"], errors='coerce')
+                dates = parse_date_fatturazione(df["Data_Fatturazione"])
                 valid_dates = dates.dropna()
                 if len(valid_dates) > 0:
                     min_date = valid_dates.min()
@@ -1181,7 +1181,7 @@ with tab_dash:
             _rend_cand = df_mag[
                 (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
             ] if "Data_Fatturazione" not in df_mag.columns else df_mag[
-                (pd.to_datetime(df_mag["Data_Fatturazione"], errors="coerce") < _soglia_resi) &
+                (parse_date_fatturazione(df_mag["Data_Fatturazione"]) < _soglia_resi) &
                 (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
             ]
 
@@ -2203,7 +2203,7 @@ with tab_scaffale:
         df = df_mag.copy()
 
         # Parse date fatturazione
-        df["_data_fatt"] = pd.to_datetime(df["Data_Fatturazione"], dayfirst=True, errors="coerce")
+        df["_data_fatt"] = parse_date_fatturazione(df["Data_Fatturazione"])
         df["Giorni_in_magazzino"] = (pd.Timestamp(DATA_SISTEMA) - df["_data_fatt"]).dt.days
         df["Giorni_in_magazzino"] = df["Giorni_in_magazzino"].fillna(0).clip(lower=0).astype(int)
 
