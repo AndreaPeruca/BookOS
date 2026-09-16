@@ -17,7 +17,7 @@ import streamlit as st
 import pandas as pd
 from datetime import date, timedelta, datetime
 from urllib.parse import quote_plus
-from bookos_core import parse_numeric, processa_magazzino as _pm_impl
+from bookos_core import parse_numeric, parse_date_fatturazione, processa_magazzino as _pm_impl
 
 processa_magazzino = st.cache_data(show_spinner=False)(_pm_impl)
 
@@ -386,8 +386,8 @@ for k, v in defaults.items():
 # ---------------------------------------------------------------------------
 # UTILITY
 # ---------------------------------------------------------------------------
-def fmt_euro(v: float) -> str:
-    return "€ " + f"{v:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+def fmt_euro(v: float, decimals: int = 2) -> str:
+    return "€ " + f"{v:,.{decimals}f}".replace(",", "X").replace(".", ",").replace("X", ".")
 
 def normalize_columns(df: pd.DataFrame) -> pd.DataFrame:
     """Strip spazi + rimappa alias case-insensitive → nomi canonici."""
@@ -578,7 +578,7 @@ def get_file_stats(df: pd.DataFrame, schema: frozenset) -> dict:
         valid_dates = pd.Series([], dtype="datetime64[ns]")
         if "Data_Fatturazione" in df.columns:
             try:
-                dates = pd.to_datetime(df["Data_Fatturazione"], errors='coerce')
+                dates = parse_date_fatturazione(df["Data_Fatturazione"])
                 valid_dates = dates.dropna()
                 if len(valid_dates) > 0:
                     min_date = valid_dates.min()
@@ -1168,7 +1168,7 @@ with tab_dash:
         st.divider()
         section("🔦 Segnali dal magazzino")
         try:
-            _soglia_resi = DATA_SISTEMA - timedelta(days=182)
+            _soglia_resi = pd.Timestamp(DATA_SISTEMA - timedelta(days=182))
             _fermi = df_mag[
                 (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
             ]
@@ -1181,7 +1181,7 @@ with tab_dash:
             _rend_cand = df_mag[
                 (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
             ] if "Data_Fatturazione" not in df_mag.columns else df_mag[
-                (pd.to_datetime(df_mag["Data_Fatturazione"], errors="coerce") < _soglia_resi) &
+                (parse_date_fatturazione(df_mag["Data_Fatturazione"]) < _soglia_resi) &
                 (df_mag["Vendute_Ultimi_30_Giorni"] == 0) & (df_mag["Giacenza"] > 0)
             ]
 
@@ -1332,164 +1332,169 @@ with tab_radar:
             )
 
     if df_mag is not None:
-        with st.expander("⚙️ Parametri analisi", expanded=False):
-            st.markdown("📋 **Adatta le soglie alle condizioni del tuo distributore.**")
-            _c1, _c2, _c3 = st.columns(3)
-    
-            help_invenduto = create_help_tooltip(
-                "Invenduto dopo",
-                "Titoli fatturati prima di questo numero di giorni fa sono considerati invenduto scaduto e disponibili per resa.",
-                "90 giorni (3 mesi), 180 giorni (6 mesi), 365 giorni (1 anno)",
-                "182 giorni (6 mesi) — equilibrio tra resa tempestiva e rotazione lenta"
-            )
-            _giorni_invenduto = _c1.number_input(
-                "Invenduto dopo (giorni)", min_value=30, max_value=730, value=182, step=30,
-                help=help_invenduto)
-    
-            help_finestra = create_help_tooltip(
-                "Ampiezza finestra resa",
-                "Durata della finestra temporale di resa a partire dalla soglia invenduto. Identifica i titoli in scadenza di resa.",
-                "7 giorni (una settimana), 15 giorni (due settimane), 30 giorni (un mese)",
-                "30 giorni — consente una corretta gestione dei tempi di resa al distributore"
-            )
-            _giorni_finestra  = _c2.number_input(
-                "Ampiezza finestra resa (giorni)", min_value=7, max_value=90, value=30, step=7,
-                help=help_finestra)
-    
-            help_rotazione = create_help_tooltip(
-                "Rotazione minima",
-                "Soglia di vendite mensili. Titoli con vendite inferiori sono classificati lenti e candidati a resa.",
-                "1-2 copie/mese (titoli molto lenti), 3-5 copie/mese (titoli lenti), 5+ copie/mese (titoli stabili)",
-                "3 copie/mese — criterio benchmark per identificare titoli in stallo"
-            )
-            _rot_min          = _c3.number_input(
-                "Rotazione minima (copie/mese)", min_value=1, max_value=20, value=int(SOGLIA_ROTAZIONE_MIN), step=1,
-                help=help_rotazione)
-            soglia_inv  = DATA_SISTEMA - timedelta(days=int(_giorni_invenduto))
-            soglia_fs   = soglia_inv
-            soglia_fe   = soglia_fs + timedelta(days=int(_giorni_finestra))
-            rot_min_ui  = int(_rot_min)
-
-        # ── Filtro scolastici / stagionali ───────────────────────────────────
-        with st.expander("🚫 Escludi dalla resa (scolastici, stagionali…)", expanded=False):
-            st.markdown(
-                "I libri di testo e i titoli stagionali (calendari, agende…) "
-                "hanno regole di resa e rotazione diverse. "
-                "Escludili dall'analisi per non inquinare i risultati."
-            )
-            _editori_disponibili = (
-                sorted(df_mag["Editore"].dropna().unique().tolist())
-                if "Editore" in df_mag.columns else []
-            )
-            editori_esclusi = st.multiselect(
-                "Escludi questi editori",
-                options=_editori_disponibili,
-                default=[],
-                key="radar_editori_esclusi",
-                help="Utile per escludere in blocco editori scolastici (es. Zanichelli, Pearson, De Agostini Scuola).",
-                placeholder="Scegli uno o più editori…",
-            )
-            parole_escluse_raw = st.text_input(
-                "Escludi titoli che contengono queste parole (separate da virgola)",
-                value="",
-                key="radar_parole_escluse",
-                help="Es: matematica, scienze, agenda, calendario  →  tutti i titoli con queste parole vengono ignorati.",
-                placeholder="Es: matematica, calendario, agenda",
-            )
-            parole_escluse = [
-                p.strip().lower() for p in parole_escluse_raw.split(",") if p.strip()
-            ]
-
-        # ── Accordi secondari (multi-distributore) ────────────────────────────
         accordi_secondari: list[dict] = []
         _editori_tutti = (
             sorted(df_mag["Editore"].dropna().unique().tolist())
             if "Editore" in df_mag.columns else []
         )
-        with st.expander("🤝 Ho più di un accordo con i distributori", expanded=False):
-            st.markdown(
-                "Se lavori con più distributori e ognuno ha finestre di resa diverse "
-                "(es. Messaggerie 6 mesi, un editore diretto 3 mesi), "
-                "definisci qui gli accordi secondari. "
-                "I titoli degli editori che assegni a un accordo secondario vengono analizzati "
-                "con le sue soglie; il resto usa i parametri principali sopra."
+        with st.expander("⚙️ Impostazioni avanzate", expanded=False):
+            _tab_param, _tab_escludi, _tab_multi, _tab_costi = st.tabs(
+                ["Parametri analisi", "Escludi dalla resa", "Multi-distributore", "Costi di spedizione"]
             )
-            _usa_secondari = st.checkbox(
-                "Aggiungi un accordo secondario", key="radar_usa_accordo2"
-            )
-            if _usa_secondari:
-                st.markdown("**Accordo secondario 1**")
-                _a2c1, _a2c2, _a2c3 = st.columns(3)
-                _a2_nome     = st.text_input("Nome accordo (es. PDE, editore diretto…)",
-                                              value="Accordo 2", key="radar_a2_nome")
-                _a2_inv      = _a2c1.number_input("Invenduto dopo (giorni)",
-                                                   min_value=30, max_value=730, value=90, step=30,
-                                                   key="radar_a2_inv")
-                _a2_finestra = _a2c2.number_input("Finestra resa (giorni)",
-                                                   min_value=7, max_value=90, value=15, step=7,
-                                                   key="radar_a2_finestra")
-                _a2_rot      = _a2c3.number_input("Rotazione minima (cop./mese)",
-                                                   min_value=1, max_value=20, value=3, step=1,
-                                                   key="radar_a2_rot")
-                _a2_editori  = st.multiselect(
-                    "Editori inclusi in questo accordo",
-                    options=_editori_tutti,
-                    default=[],
-                    key="radar_a2_editori",
-                    placeholder="Scegli gli editori di questo distributore…",
-                )
-                if _a2_editori:
-                    accordi_secondari.append({
-                        "nome":     _a2_nome or "Accordo 2",
-                        "inv":      int(_a2_inv),
-                        "finestra": int(_a2_finestra),
-                        "rot":      int(_a2_rot),
-                        "editori":  _a2_editori,
-                    })
 
-                _usa_terzo = st.checkbox("Aggiungi un terzo accordo", key="radar_usa_accordo3")
-                if _usa_terzo:
-                    st.markdown("**Accordo secondario 2**")
-                    _a3c1, _a3c2, _a3c3 = st.columns(3)
-                    _a3_nome     = st.text_input("Nome accordo",
-                                                  value="Accordo 3", key="radar_a3_nome")
-                    _a3_inv      = _a3c1.number_input("Invenduto dopo (giorni)",
+            with _tab_param:
+                st.markdown("📋 **Adatta le soglie alle condizioni del tuo distributore.**")
+                _c1, _c2, _c3 = st.columns(3)
+
+                help_invenduto = create_help_tooltip(
+                    "Invenduto dopo",
+                    "Titoli fatturati prima di questo numero di giorni fa sono considerati invenduto scaduto e disponibili per resa.",
+                    "90 giorni (3 mesi), 180 giorni (6 mesi), 365 giorni (1 anno)",
+                    "182 giorni (6 mesi) — equilibrio tra resa tempestiva e rotazione lenta"
+                )
+                _giorni_invenduto = _c1.number_input(
+                    "Invenduto dopo (giorni)", min_value=30, max_value=730, value=182, step=30,
+                    help=help_invenduto)
+
+                help_finestra = create_help_tooltip(
+                    "Ampiezza finestra resa",
+                    "Durata della finestra temporale di resa a partire dalla soglia invenduto. Identifica i titoli in scadenza di resa.",
+                    "7 giorni (una settimana), 15 giorni (due settimane), 30 giorni (un mese)",
+                    "30 giorni — consente una corretta gestione dei tempi di resa al distributore"
+                )
+                _giorni_finestra  = _c2.number_input(
+                    "Ampiezza finestra resa (giorni)", min_value=7, max_value=90, value=30, step=7,
+                    help=help_finestra)
+
+                help_rotazione = create_help_tooltip(
+                    "Rotazione minima",
+                    "Soglia di vendite mensili. Titoli con vendite inferiori sono classificati lenti e candidati a resa.",
+                    "1-2 copie/mese (titoli molto lenti), 3-5 copie/mese (titoli lenti), 5+ copie/mese (titoli stabili)",
+                    "3 copie/mese — criterio benchmark per identificare titoli in stallo"
+                )
+                _rot_min          = _c3.number_input(
+                    "Rotazione minima (copie/mese)", min_value=1, max_value=20, value=int(SOGLIA_ROTAZIONE_MIN), step=1,
+                    help=help_rotazione)
+                soglia_inv  = DATA_SISTEMA - timedelta(days=int(_giorni_invenduto))
+                soglia_fs   = soglia_inv
+                soglia_fe   = soglia_fs + timedelta(days=int(_giorni_finestra))
+                rot_min_ui  = int(_rot_min)
+
+            # ── Filtro scolastici / stagionali ───────────────────────────────
+            with _tab_escludi:
+                st.markdown(
+                    "I libri di testo e i titoli stagionali (calendari, agende…) "
+                    "hanno regole di resa e rotazione diverse. "
+                    "Escludili dall'analisi per non inquinare i risultati."
+                )
+                _editori_disponibili = (
+                    sorted(df_mag["Editore"].dropna().unique().tolist())
+                    if "Editore" in df_mag.columns else []
+                )
+                editori_esclusi = st.multiselect(
+                    "Escludi questi editori",
+                    options=_editori_disponibili,
+                    default=[],
+                    key="radar_editori_esclusi",
+                    help="Utile per escludere in blocco editori scolastici (es. Zanichelli, Pearson, De Agostini Scuola).",
+                    placeholder="Scegli uno o più editori…",
+                )
+                parole_escluse_raw = st.text_input(
+                    "Escludi titoli che contengono queste parole (separate da virgola)",
+                    value="",
+                    key="radar_parole_escluse",
+                    help="Es: matematica, scienze, agenda, calendario  →  tutti i titoli con queste parole vengono ignorati.",
+                    placeholder="Es: matematica, calendario, agenda",
+                )
+                parole_escluse = [
+                    p.strip().lower() for p in parole_escluse_raw.split(",") if p.strip()
+                ]
+
+            # ── Accordi secondari (multi-distributore) ────────────────────────
+            with _tab_multi:
+                st.markdown(
+                    "Se lavori con più distributori e ognuno ha finestre di resa diverse "
+                    "(es. Messaggerie 6 mesi, un editore diretto 3 mesi), "
+                    "definisci qui gli accordi secondari. "
+                    "I titoli degli editori che assegni a un accordo secondario vengono analizzati "
+                    "con le sue soglie; il resto usa i parametri principali sopra."
+                )
+                _usa_secondari = st.checkbox(
+                    "Aggiungi un accordo secondario", key="radar_usa_accordo2"
+                )
+                if _usa_secondari:
+                    st.markdown("**Accordo secondario 1**")
+                    _a2c1, _a2c2, _a2c3 = st.columns(3)
+                    _a2_nome     = st.text_input("Nome accordo (es. PDE, editore diretto…)",
+                                                  value="Accordo 2", key="radar_a2_nome")
+                    _a2_inv      = _a2c1.number_input("Invenduto dopo (giorni)",
                                                        min_value=30, max_value=730, value=90, step=30,
-                                                       key="radar_a3_inv")
-                    _a3_finestra = _a3c2.number_input("Finestra resa (giorni)",
+                                                       key="radar_a2_inv")
+                    _a2_finestra = _a2c2.number_input("Finestra resa (giorni)",
                                                        min_value=7, max_value=90, value=15, step=7,
-                                                       key="radar_a3_finestra")
-                    _a3_rot      = _a3c3.number_input("Rotazione minima (cop./mese)",
+                                                       key="radar_a2_finestra")
+                    _a2_rot      = _a2c3.number_input("Rotazione minima (cop./mese)",
                                                        min_value=1, max_value=20, value=3, step=1,
-                                                       key="radar_a3_rot")
-                    _a3_editori  = st.multiselect(
+                                                       key="radar_a2_rot")
+                    _a2_editori  = st.multiselect(
                         "Editori inclusi in questo accordo",
                         options=_editori_tutti,
                         default=[],
-                        key="radar_a3_editori",
+                        key="radar_a2_editori",
                         placeholder="Scegli gli editori di questo distributore…",
                     )
-                    if _a3_editori:
+                    if _a2_editori:
                         accordi_secondari.append({
-                            "nome":     _a3_nome or "Accordo 3",
-                            "inv":      int(_a3_inv),
-                            "finestra": int(_a3_finestra),
-                            "rot":      int(_a3_rot),
-                            "editori":  _a3_editori,
+                            "nome":     _a2_nome or "Accordo 2",
+                            "inv":      int(_a2_inv),
+                            "finestra": int(_a2_finestra),
+                            "rot":      int(_a2_rot),
+                            "editori":  _a2_editori,
                         })
 
-        st.markdown("**Costi di spedizione resa**")
-        _cs1, _cs2 = st.columns(2)
-        costo_spedizione_ui = _cs1.number_input(
-            "Costo fisso per spedizione (€)",
-            min_value=0.0, max_value=500.0, value=0.0, step=1.0,
-            help="Costo una-tantum per inviare la partita al distributore (es. €15 per il corriere).",
-        )
-        costo_per_copia_ui = _cs2.number_input(
-            "Costo per copia (€)",
-            min_value=0.0, max_value=10.0, value=0.0, step=0.10,
-            help="Costo variabile per ogni copia resa (es. €0.50 per imballaggio e handling).",
-        )
+                    _usa_terzo = st.checkbox("Aggiungi un terzo accordo", key="radar_usa_accordo3")
+                    if _usa_terzo:
+                        st.markdown("**Accordo secondario 2**")
+                        _a3c1, _a3c2, _a3c3 = st.columns(3)
+                        _a3_nome     = st.text_input("Nome accordo",
+                                                      value="Accordo 3", key="radar_a3_nome")
+                        _a3_inv      = _a3c1.number_input("Invenduto dopo (giorni)",
+                                                           min_value=30, max_value=730, value=90, step=30,
+                                                           key="radar_a3_inv")
+                        _a3_finestra = _a3c2.number_input("Finestra resa (giorni)",
+                                                           min_value=7, max_value=90, value=15, step=7,
+                                                           key="radar_a3_finestra")
+                        _a3_rot      = _a3c3.number_input("Rotazione minima (cop./mese)",
+                                                           min_value=1, max_value=20, value=3, step=1,
+                                                           key="radar_a3_rot")
+                        _a3_editori  = st.multiselect(
+                            "Editori inclusi in questo accordo",
+                            options=_editori_tutti,
+                            default=[],
+                            key="radar_a3_editori",
+                            placeholder="Scegli gli editori di questo distributore…",
+                        )
+                        if _a3_editori:
+                            accordi_secondari.append({
+                                "nome":     _a3_nome or "Accordo 3",
+                                "inv":      int(_a3_inv),
+                                "finestra": int(_a3_finestra),
+                                "rot":      int(_a3_rot),
+                                "editori":  _a3_editori,
+                            })
+
+            with _tab_costi:
+                _cs1, _cs2 = st.columns(2)
+                costo_spedizione_ui = _cs1.number_input(
+                    "Costo fisso per spedizione (€)",
+                    min_value=0.0, max_value=500.0, value=0.0, step=1.0,
+                    help="Costo una-tantum per inviare la partita al distributore (es. €15 per il corriere).",
+                )
+                costo_per_copia_ui = _cs2.number_input(
+                    "Costo per copia (€)",
+                    min_value=0.0, max_value=10.0, value=0.0, step=0.10,
+                    help="Costo variabile per ogni copia resa (es. €0.50 per imballaggio e handling).",
+                )
 
     if df_mag is not None:
         # ── Applica filtro scolastici/stagionali ──────────────────────────────
@@ -1867,8 +1872,8 @@ with tab_radar:
                 )
                 if ha_costi:
                     caption += (
-                        f" Il valore **netto** deduce €{costo_per_copia_ui:.2f}/copia "
-                        f"e €{costo_spedizione_ui:.2f} di spedizione."
+                        f" Il valore **netto** deduce {fmt_euro(costo_per_copia_ui)}/copia "
+                        f"e {fmt_euro(costo_spedizione_ui)} di spedizione."
                     )
                 st.caption(caption)
             else:
@@ -2203,7 +2208,7 @@ with tab_scaffale:
         df = df_mag.copy()
 
         # Parse date fatturazione
-        df["_data_fatt"] = pd.to_datetime(df["Data_Fatturazione"], dayfirst=True, errors="coerce")
+        df["_data_fatt"] = parse_date_fatturazione(df["Data_Fatturazione"])
         df["Giorni_in_magazzino"] = (pd.Timestamp(DATA_SISTEMA) - df["_data_fatt"]).dt.days
         df["Giorni_in_magazzino"] = df["Giorni_in_magazzino"].fillna(0).clip(lower=0).astype(int)
 
@@ -2258,7 +2263,7 @@ with tab_scaffale:
 
         m1, m2, m3, m4 = st.columns(4)
         with m1:
-            metric_card("Costo/giorno per posto", f"{costo_giorno_posto:.3f} €", "neutral")
+            metric_card("Costo/giorno per posto", fmt_euro(costo_giorno_posto, decimals=3), "neutral")
         with m2:
             metric_card("Libri in perdita", str(n_rossi), "negative" if n_rossi > 0 else "positive")
         with m3:

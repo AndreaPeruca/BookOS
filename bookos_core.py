@@ -19,6 +19,26 @@ def parse_numeric(series: pd.Series) -> pd.Series:
     return pd.to_numeric(result, errors='coerce').fillna(0)
 
 
+def parse_date_fatturazione(series: pd.Series) -> pd.Series:
+    """Converte una colonna di date in datetime, accettando dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy.
+
+    Nota: pd.to_datetime(format="mixed"/dayfirst=True) interpreta male le date ISO
+    (es. "2026-04-09" letta come 4 settembre invece di 9 aprile), perché dayfirst
+    viene applicato anche a formati non ambigui. Proviamo quindi i formati espliciti
+    in sequenza, dal più specifico, così ognuno viene interpretato solo con la
+    propria convenzione giorno/mese.
+    """
+    _raw = series.astype(str).str.strip()
+    _parsed = pd.to_datetime(_raw, format="%d/%m/%Y", errors="coerce")
+    _mask = _parsed.isna()
+    if _mask.any():
+        _parsed.loc[_mask] = pd.to_datetime(_raw[_mask], format="%Y-%m-%d", errors="coerce")
+    _mask = _parsed.isna()
+    if _mask.any():
+        _parsed.loc[_mask] = pd.to_datetime(_raw[_mask], format="%d-%m-%Y", errors="coerce")
+    return _parsed
+
+
 def processa_magazzino(
     df_raw: pd.DataFrame,
     soglia_invenduto: date,
@@ -43,19 +63,8 @@ def processa_magazzino(
     df = df_raw.copy()
     n_totale = len(df)
 
-    # Parsing robusto: accetta dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy
-    _raw = df["Data_Fatturazione"].astype(str).str.strip()
-    try:
-        # pandas >= 2.0
-        df["Data_Fatturazione"] = pd.to_datetime(_raw, format="mixed", dayfirst=True, errors="coerce")
-    except TypeError:
-        # pandas < 2.0: fallback sequenziale
-        _parsed = pd.to_datetime(_raw, format="%d/%m/%Y", errors="coerce")
-        _mask = _parsed.isna()
-        _parsed[_mask] = pd.to_datetime(_raw[_mask], format="%Y-%m-%d", errors="coerce")
-        _mask2 = _parsed.isna()
-        _parsed[_mask2] = pd.to_datetime(_raw[_mask2], format="%d-%m-%Y", errors="coerce")
-        df["Data_Fatturazione"] = _parsed
+    # Parsing robusto: accetta dd/mm/yyyy, yyyy-mm-dd, dd-mm-yyyy.
+    df["Data_Fatturazione"] = parse_date_fatturazione(df["Data_Fatturazione"])
 
     warnings_list = []
 

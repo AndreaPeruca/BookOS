@@ -43,6 +43,9 @@ BENCHMARK_TEST.md
 # Streamlit cache
 .streamlit/
 
+# Local user preferences (auto-saved per session, not shared state)
+preferenze.json
+
 # Environment
 .env
 .env.local
